@@ -178,6 +178,50 @@ ggplot(df_plot2, aes(x=sigma2)) +
   ylab("Density") +
   theme_classic()
 ```
+The above plot illustrates the posterior distribution of $\sigma^{2}$.
+
+## Task 2b
+
+```{r}
+#Gini calculation 
+gini <- 2*pnorm(sqrt(sigma2)/sqrt(2)) - 1
+```
+
+## Task 2c
+
+```{r}
+#producing sample quantiles corresponding to the probabilities
+intervals <- quantile(gini, probs = c(0.025,0.975))
+```
+
+The 95% equal tail credible interval for G is 0.1975510 for 2.5% and 0.4908131 for 97,5%.
+
+## Task 2d
+
+```{r}
+#kernel density estimation
+gini_density <- density(gini)
+
+df_density <- data.frame(
+  #the n coordinates of the points where the density is estimated
+  "coord" = gini_density$x,
+  #the estimated density values
+  "estimated_vals" = gini_density$y)
+
+#order/sort the estimated density values
+df_density <- df_density[order(gini_density$y, decreasing = TRUE),]
+
+hpdi <- hdi(df_density$estimated_vals, 0.95)
+```
+
+# Assignment 3 *Bayesian inference for the concentration parameter in the von Mises distribution*
+
+## Task 3a
+
+```{r}
+degrees <- c(285, 296, 314, 20, 299, 296, 40, 303, 326, 308)
+radians = c(-2.44, 2.14, 2.54, 1.83, 2.02, 2.33, -2.79, 2.23, 2.07, 2.02)
+```
 
 \newpage
 
