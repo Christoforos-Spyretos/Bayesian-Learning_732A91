@@ -1,0 +1,186 @@
+---
+title: "Bayesian Learning (732A91) Lab1 Report"
+author: "Christoforos Spyretos (chrsp415) & Marketos Damigos (marda352)"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
+```
+
+# Assignment 1 *Daniel Bernoulli*
+
+Let $y_{1},y_{2},....,y_{n} \sim Bern(\theta)$, and the obtained sample has 13 successes out of 50 trails. The $Beta(a_{0},b_{0})$ prior has $a_{0}=b_{0}=5$.
+
+## Task 1a
+
+The mean value and the standard deviation of the Beta distribution for $\theta$ are calculated by the below formulas:
+
+```{r echo=FALSE}
+# task 1a true mean, var & sd
+a0 <- 5
+b0 <- 5
+n <- 50
+s <- 13
+f <- 50 - 13
+mean_true <- (a0 + s)/(a0 + s + b0 + f)
+var_true <- ((a0 + s)*(b0 + f)) / (((a0 + s + b0 + f)^2)*(a0 + s + b0 + f + 1))
+sd_true <- sqrt(var_true)
+```
+
+$$
+\begin{aligned}
+E[\theta] &= \frac{a_{0}+s}{a_{0}+s+b_{0}+f} \\
+&= \frac{18}{60} \\
+&= 0.3
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+Var[\theta] &= \frac{(a_{0}+s)(b_{0}+f)}{((a_{0}+s)+(b_{0}+f))^{2}((a_{0}+s)+(b_{0}+f)+1)} \\
+&= \frac{18 \cdot 42}{(18+42)^{2}(18+42+1)} \\
+&= 0.003442623
+\end{aligned}
+$$
+
+$$ 
+\begin{aligned} 
+SD[\theta] &= \sqrt{Var[\theta]} = 0.05867387
+\end{aligned}
+$$
+
+Where $a_{0}$ and $b_{0}$ are the arguments of the Beta prior, s is the number of successes and f is the number of failures.
+
+```{r echo=FALSE, warning=FALSE}
+set.seed(12345)
+
+# calculate posterior's mean
+mean_posterior = c()
+for (i in 1:1000) {
+# rbeta generates random deviates
+  mean_posterior[i] = mean(rbeta(n = i, shape1 = a0 + s, shape2 = b0 + f)) 
+}
+
+# calculate posterior's sd
+sd_posterior = c()
+for (i in 1:1000) {
+  sd_posterior[i] = sd(rbeta(n = i, shape1 = a0 + s, shape2 = b0 + f))
+}
+
+# df for plots
+df_plot1 <- data.frame("draws" = 1:1000,
+                       "mean_true" = mean_true,
+                       "sd_true" = sd_true,
+                       "mean_posterior" = mean_posterior,
+                       "sd_posterior" = sd_posterior)
+
+library(ggplot2)
+
+# plot for mean values
+ggplot(df_plot1) +
+  geom_point(aes( x = draws, y = mean_posterior, color = "nany")) +
+  geom_line(aes(x = draws, y = mean_true, color = "red4")) +
+  theme(legend.position="right") +
+  scale_color_manual(values=c('navy','red4'),
+                     name = "Samples",
+                     labels = c("Posterior's Mean Values","True Mean Values" )) +
+  ggtitle("Mean Values Graphs") +
+  xlab("Number of Draws") +
+  ylab("Mean value of each sample") +
+  theme_classic()
+```
+
+```{r echo=FALSE}
+# plot for sd values
+ggplot(df_plot1) +
+  geom_point(aes( x = draws, y = sd_posterior, color = "nany")) +
+  geom_line(aes(x = draws, y = sd_true, color = "red4")) +
+  theme(legend.position="right") +
+  scale_color_manual(values=c('navy','red4'),
+                     name = "Samples",
+                     labels = c("Posterior's Sd Values","True Sd Values" )) +
+  ggtitle("Standard Deviation Values Graphs") +
+  xlab("Number of Draws") +
+  ylab("Sd value of each sample") +
+  theme_classic()
+```
+
+From the above plots, it could be seen that both posterior's mean and standard deviation values converge to the actual mean and standard deviation values, respectively. More specifically, between 0 and approximately 250 draws in both graphs, some of the posterior's values abstain from true values. However, after the 250 draws, the posterior's values start to converge to the true ones in both graphs.
+
+## Task 1b
+
+```{r echo=FALSE}
+set.seed(12345)
+
+#generates 1,000 random deviates.
+posterior_sample <- rbeta(n = 1000, shape1 = a0+s, shape2 = b0+f)
+
+#posterior probability
+posterior_prob <- sum(posterior_sample < 0.3)/1000
+
+#exact posterior prob
+#pbeta the distribution function
+exact_prob <- pbeta(q = 0.3, shape1 = a0+s, shape2 = b0+f)
+```
+
+The posterior probability $P(\theta <0.3|y)$ equals 0.506, and the exact probability value from the Beta posterior is 0.5150226; thus, it could be assumed that both values are pretty similar.
+
+## Task 1c
+
+```{r echo=FALSE}
+phi <- log(posterior_sample/(1-posterior_sample))
+
+df_plot2 <- data.frame("phi" =phi)
+
+ggplot(df_plot2, aes(x=phi)) +
+  geom_histogram(bins = 30, color = "navy", fill = "steelblue2", aes(y=..density..)) +
+  geom_density(colour = "red4", size = 1) +
+  ggtitle("Histogram of Log-Odds") +
+  xlab("Log-Odds Values") +
+  ylab("Density") +
+  theme_classic()
+```
+
+The above plot illustrates the density of the log-odds values $\phi=log\frac{\theta}{1-\theta}$, where $\theta$ takes values from simulated draws from the Beta posterior.
+
+\newpage 
+
+# Assignment 2 *Log-normal distribution and the Gini coefficient.*
+
+## Task 2a
+
+```{r echo=FALSE}
+#observations
+obs <- c(33,24,48,32,55,74,23,76,17)
+
+tau_2 <- sum((log(obs) - 3.5)^2)/9
+
+
+#generates 10,000 random deviates.
+set.seed(12345)
+sigma2 <- c()
+for (i in 1:10000){
+  values<- rchisq(1,9)
+  sigma2[i] <- 9*tau_2 / values
+}
+
+df_plot2 <- data.frame("sigma2" = sigma2)
+
+ggplot(df_plot2, aes(x=sigma2)) +
+  geom_histogram(bins = 30, color = "navy", fill = "steelblue2", aes(y=..density..)) +
+  geom_density(colour = "red4", size = 1) +
+  scale_x_continuous(limits = c(0,1.5)) +
+  ggtitle("Posterior Distribution") +
+  xlab("Sigma2 Values") +
+  ylab("Density") +
+  theme_classic()
+```
+
+\newpage
+
+# *Appendix*
+```{r ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
+```
