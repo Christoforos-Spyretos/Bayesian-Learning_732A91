@@ -8,6 +8,7 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
 knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
+
 ```
 
 # Assignment 1 *Daniel Bernoulli*
@@ -19,15 +20,24 @@ Let $y_{1},y_{2},....,y_{n} \sim Bern(\theta)$, and the obtained sample has 13 s
 The mean value and the standard deviation of the Beta distribution for $\theta$ are calculated by the below formulas:
 
 ```{r echo=FALSE}
-# task 1a true mean, var & sd
+#____________________________Assignment 1____________________________#
+
+#Task 1a
+
+#parameters
 a0 <- 5
 b0 <- 5
 n <- 50
 s <- 13
 f <- 50 - 13
+
+#true mean
 mean_true <- (a0 + s)/(a0 + s + b0 + f)
+#true var
 var_true <- ((a0 + s)*(b0 + f)) / (((a0 + s + b0 + f)^2)*(a0 + s + b0 + f + 1))
+#true sd
 sd_true <- sqrt(var_true)
+
 ```
 
 $$
@@ -54,23 +64,26 @@ $$
 
 Where $a_{0}$ and $b_{0}$ are the arguments of the Beta prior, s is the number of successes and f is the number of failures.
 
+In the next page, the graphs represent the mean value and the standard deviation of the Beta distribution for $\theta$ and the mean value $E[\theta|y]$ and standard deviation $SD[\theta|y]$ from the posterior $\theta|y \sim Beta(a_{0} + s, b_{0} + f )$, where $y=y_{1},y_{2},....,y_{n}$.
+
+
 ```{r echo=FALSE, warning=FALSE}
 set.seed(12345)
 
-# calculate posterior's mean
+#calculate posterior's mean
 mean_posterior = c()
 for (i in 1:1000) {
-# rbeta generates random deviates
+  #rbeta generates random deviates
   mean_posterior[i] = mean(rbeta(n = i, shape1 = a0 + s, shape2 = b0 + f)) 
 }
 
-# calculate posterior's sd
+#calculate posterior's sd
 sd_posterior = c()
 for (i in 1:1000) {
   sd_posterior[i] = sd(rbeta(n = i, shape1 = a0 + s, shape2 = b0 + f))
 }
 
-# df for plots
+#data for plots
 df_plot1 <- data.frame("draws" = 1:1000,
                        "mean_true" = mean_true,
                        "sd_true" = sd_true,
@@ -79,7 +92,7 @@ df_plot1 <- data.frame("draws" = 1:1000,
 
 library(ggplot2)
 
-# plot for mean values
+#plot of mean values
 ggplot(df_plot1) +
   geom_point(aes( x = draws, y = mean_posterior, color = "nany")) +
   geom_line(aes(x = draws, y = mean_true, color = "red4")) +
@@ -91,10 +104,11 @@ ggplot(df_plot1) +
   xlab("Number of Draws") +
   ylab("Mean value of each sample") +
   theme_classic()
+
 ```
 
 ```{r echo=FALSE}
-# plot for sd values
+# plot of sd values
 ggplot(df_plot1) +
   geom_point(aes( x = draws, y = sd_posterior, color = "nany")) +
   geom_line(aes(x = draws, y = sd_true, color = "red4")) +
@@ -106,6 +120,7 @@ ggplot(df_plot1) +
   xlab("Number of Draws") +
   ylab("Sd value of each sample") +
   theme_classic()
+
 ```
 
 From the above plots, it could be seen that both posterior's mean and standard deviation values converge to the actual mean and standard deviation values, respectively. More specifically, between 0 and approximately 250 draws in both graphs, some of the posterior's values abstain from true values. However, after the 250 draws, the posterior's values start to converge to the true ones in both graphs.
@@ -113,6 +128,8 @@ From the above plots, it could be seen that both posterior's mean and standard d
 ## Task 1b
 
 ```{r echo=FALSE}
+#Task 1b
+
 set.seed(12345)
 
 #generates 1,000 random deviates.
@@ -124,6 +141,7 @@ posterior_prob <- sum(posterior_sample < 0.3)/1000
 #exact posterior prob
 #pbeta the distribution function
 exact_prob <- pbeta(q = 0.3, shape1 = a0+s, shape2 = b0+f)
+
 ```
 
 The posterior probability $P(\theta <0.3|y)$ equals 0.506, and the exact probability value from the Beta posterior is 0.5150226; thus, it could be assumed that both values are pretty similar.
@@ -131,10 +149,15 @@ The posterior probability $P(\theta <0.3|y)$ equals 0.506, and the exact probabi
 ## Task 1c
 
 ```{r echo=FALSE}
+#Task 1c
+
+#log-odds 
 phi <- log(posterior_sample/(1-posterior_sample))
 
-df_plot2 <- data.frame("phi" =phi)
+#data for plot
+df_plot2 <- data.frame("phi" = phi)
 
+#plot of log-odds
 ggplot(df_plot2, aes(x=phi)) +
   geom_histogram(bins = 30, color = "navy", fill = "steelblue2", aes(y=..density..)) +
   geom_density(colour = "red4", size = 1) +
@@ -142,6 +165,7 @@ ggplot(df_plot2, aes(x=phi)) +
   xlab("Log-Odds Values") +
   ylab("Density") +
   theme_classic()
+
 ```
 
 The above plot illustrates the density of the log-odds values $\phi=log\frac{\theta}{1-\theta}$, where $\theta$ takes values from simulated draws from the Beta posterior.
@@ -153,9 +177,14 @@ The above plot illustrates the density of the log-odds values $\phi=log\frac{\th
 ## Task 2a
 
 ```{r echo=FALSE}
+#____________________________Assignment 2____________________________#
+
+#Task 2a
+
 #observations
 obs <- c(33,24,48,32,55,74,23,76,17)
 
+#tau^2 
 tau_2 <- sum((log(obs) - 3.5)^2)/9
 
 
@@ -163,12 +192,13 @@ tau_2 <- sum((log(obs) - 3.5)^2)/9
 set.seed(12345)
 sigma2 <- c()
 for (i in 1:10000){
-  values<- rchisq(1,9)
-  sigma2[i] <- 9*tau_2 / values
+  sigma2[i] <- 9*tau_2 / rchisq(1,9)
 }
 
+#data for plot
 df_plot2 <- data.frame("sigma2" = sigma2)
 
+#plot
 ggplot(df_plot2, aes(x=sigma2)) +
   geom_histogram(bins = 30, color = "navy", fill = "steelblue2", aes(y=..density..)) +
   geom_density(colour = "red4", size = 1) +
@@ -177,52 +207,48 @@ ggplot(df_plot2, aes(x=sigma2)) +
   xlab("Sigma2 Values") +
   ylab("Density") +
   theme_classic()
+
 ```
 The above plot illustrates the posterior distribution of $\sigma^{2}$.
 
 ## Task 2b
 
-```{r echo=FALSE}
+```{r}
+#Task 2b
+
 #Gini calculation 
 gini <- 2*pnorm(sqrt(sigma2)/sqrt(2)) - 1
 
-df_plot3 <- data.frame("Gini" = gini)
-
-ggplot(df_plot3, aes(x=Gini)) +
-  geom_histogram(bins = 30, color = "navy", fill = "steelblue2", aes(y=..density..)) +
-  geom_density(colour = "red4", size = 1) +
-  scale_x_continuous(limits = c(0,1.5)) +
-  ggtitle("Gini Distribution") +
-  xlab("Gini Values") +
-  ylab("Density") +
-  theme_classic()
 ```
-
-The above plot illustrates the Gini distribution.
 
 ## Task 2c
 
 ```{r echo=FALSE}
-#producing sample quantiles corresponding to the probabilities
-intervals <- quantile(gini, probs = c(0.025,0.975))
+#Task 2c
 
-ggplot(df_plot3, aes(x=Gini)) +
-  geom_histogram(bins = 30, color = "navy", fill = "steelblue2", aes(y=..density..)) +
-  geom_density(colour = "red4", size = 1) +
-  scale_x_continuous(limits = c(0,1.5)) +
-  ggtitle("Gini Distribution") +
-  xlab("Gini Values") +
-  ylab("Density") +
-  theme_classic() +
-  geom_vline(aes(xintercept=intervals[1]), color = "green4", size = 1) +
-  geom_vline(aes(xintercept=intervals[2]), color = "green4", size = 1)
+#producing sample quantiles corresponding to the probabilities
+interval <- quantile(gini, probs = c(0.025,0.975))
 ```
 
-The 95% equal tail credible interval for G is 0.1975510 for 2.5% and 0.4908131 for 97,5%.
+```{r echo=FALSE}
+
+#table for the interval
+df_intervals <- data.frame("lower_bound" = interval[1], "upper_bound" = interval[2])
+colnames(df_intervals) <- c("lower bound", "upper bound")
+rownames(df_intervals) <- c("95% Equal Tail Credible Interval")
+knitr::kable(df_intervals)
+
+```
+
+The above table illustrates the 95% equal tail credible interval for the Gini coefficient.
+
+\newpage
 
 ## Task 2d
 
 ```{r echo=FALSE}
+#Task 2d
+
 #kernel density estimation
 gini_density <- density(gini)
 
@@ -235,24 +261,27 @@ df_density <- data.frame(
 #order/sort the estimated density values
 df_density <- df_density[order(gini_density$y, decreasing = TRUE),]
 
-library("HDInterval")
-hpdi <- hdi(gini_density, 0.95)
+#calculate the probs
+df_density$probs <- cumsum(df_density$estimated_vals)/sum(df_density$estimated_vals)
 
-ggplot(df_plot3, aes(x=Gini)) +
-  geom_histogram(bins = 30, color = "navy", fill = "steelblue2", aes(y=..density..)) +
-  geom_density(colour = "red4", size = 1) +
-  scale_x_continuous(limits = c(0,1.5)) +
-  ggtitle("Gini Distribution") +
-  xlab("Gini Values") +
-  ylab("Density") +
-  theme_classic() +
-  geom_vline(aes(xintercept=intervals[1]), color = "green4", size = 1) +
-  geom_vline(aes(xintercept=intervals[2]), color = "green4", size = 1) +
-  geom_vline(aes(xintercept=hpdi[1]), color = "purple3", size = 1) +
-  geom_vline(aes(xintercept=hpdi[2]), color = "purple3", size = 1) 
+#get the indexes
+index <- which(df_density$probs <= 0.95)
+
+#get the probs
+hdps <- df_density[index,]
+
+#low hdpi
+low_hdpi <- min(hdps$coord)
+#upper hdpi
+upp_hdpi <- max(hdps$coord)
+
+intervals <- data.frame("lower_bound" = c(interval[1],low_hdpi), "upper_bound" = c(interval[2],upp_hdpi))
+rownames(intervals) <- c("95% Equal Tail Credible Interval","95% Highest Posterior Density Interval")
+
+knitr::kable(intervals)
 ```
 
-\newpage
+The above table illustrates the 95% equal tail credible interval and the 95% highest posterior density interval for the Gini coefficient. It could be assumed that both intervals have almost similar lower and upper bounds.
 
 # Assignment 3 *Bayesian inference for the concentration parameter in the von Mises distribution*
 
@@ -263,11 +292,10 @@ The posterior is given by the below expression:
 $$
 \begin{aligned}
 p(\kappa|y,\mu) &= \frac{p(y,\mu|\kappa) \cdot p(\kappa)}{\int_{k}p(y,\mu|\kappa) \cdot p(\kappa)d\kappa} \\
-&\propto p(y,\mu|\kappa) \cdot p(\kappa)
 \end{aligned}
 $$
 
-Thus, the likelihood $p(y,\mu|\kappa)$ and the prior $p(\kappa)$ need to be calculated.
+The numerator is consisted of the likelihood $p(y,\mu|\kappa)$ and the prior $p(\kappa)$. The denominator is the marginal likelihood, which is the normalising constant, ensuring that the posterior distribution of $\kappa$ adds up to one. 
 
 The likelihood is given by the below formula:
 
@@ -281,7 +309,7 @@ p(y,\mu|\kappa) &= \prod^n_{i=1}p(y|\mu,\kappa) \\
 \end{aligned}
 $$
 
-It is known that $\kappa \sim Exp(\lambda=1)$; thus is only needed o calculate the probability density function of $\kappa$.
+It is given that $\kappa \sim Exp(\lambda=1)$; thus, it is only needed to calculate the probability density function of $\kappa$.
 
 $$
 \begin{aligned}
@@ -290,44 +318,62 @@ p(\kappa) &= \lambda \cdot  \exp(-\lambda x) \\
 \end{aligned}
 $$
 
-The posterior is given by the below expression:
+Hence the numerator is given by the below expression:
 
 $$
 \begin{aligned}
 p(\kappa|y,\mu) &= \frac{1}{I_{o}(\kappa)^n}\cdot \exp(\kappa \cdot \sum^n_{i=1} \cos( y_i-\mu))\cdot \exp(-\kappa)\\
-&=\frac{1}{I_{o}(\kappa)^n}\cdot \exp(\kappa \cdot \sum^n_{i=1} \cos( y_i-\mu)-\kappa)
+&=\frac{1}{I_{o}(\kappa)^n}\cdot \exp \Big(\kappa \cdot \Big(\sum^n_{i=1} \cos( y_i-\mu)-1 \Big) \Big)
 \end{aligned}
 $$
 
 ```{r echo=FALSE}
+#____________________________Assignment 3____________________________#
+
+#Task 3a
+
+#data
 degrees <- c(285, 296, 314, 20, 299, 296, 40, 303, 326, 308)
 radians = c(-2.44, 2.14, 2.54, 1.83, 2.02, 2.33, -2.79, 2.23, 2.07, 2.02)
 
-#normalasation 
-mean_rads = mean(radians)
-sd_rads = sd(radians)
-norm_radians = (radians-mean_rads)/sd_rads
+#kappa values 
+k <- seq(0,10,0.25)
 
-k <- seq(0.1,3,0.1)
+#unormalised posterior
+posterior <- exp(k*sum(cos(radians-2.51))-1)/(besselI(x = k, nu=0)^9)
 
-posterior <- exp(k*sum(cos(norm_radians-2.51))-k)/besselI(x = k, nu=0)^9
+#normalising constant/marginal likelihood
+norm_constant <- sum(posterior)
 
-df_plot3 <- data.frame("k"=k, "posterior_vals"=posterior)
+#normalised posterior
+norm_posterior <- posterior/norm_constant
 
+#data for plotting
+df_plot3 <- data.frame("k"=k, "posterior_vals"=norm_posterior)
+
+#plot 
 ggplot(df_plot3) +
   geom_line(aes(x=k, y=posterior_vals),colour = "red4", size = 1) +
   ggtitle("Posterior Distribution of k") +
   xlab("K Values") +
   ylab("Density") +
   theme_classic()
+
 ```
 
 ## Task 3b
 
-```{r echo=FALSE}
-max_index <- which.max(posterior)
-k_mode <- posterior[max_index]
+```{r}
+#Task 3b
+
+#get the index of the max value
+max_index <- which.max(norm_posterior)
+
+#get the max value
+k_mode <- norm_posterior[max_index]
 ```
+
+The approximate posterior mode of $\kappa$ equals 0.04552635
 
 \newpage
 
