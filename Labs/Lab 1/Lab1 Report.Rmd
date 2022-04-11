@@ -108,7 +108,7 @@ ggplot(df_plot1) +
 ```
 
 ```{r echo=FALSE}
-# plot of sd values
+#plot of sd values
 ggplot(df_plot1) +
   geom_point(aes( x = draws, y = sd_posterior, color = "nany")) +
   geom_line(aes(x = draws, y = sd_true, color = "red4")) +
@@ -168,7 +168,7 @@ ggplot(df_plot2, aes(x=phi)) +
 
 ```
 
-The above plot illustrates the density of the log-odds values $\phi=log\frac{\theta}{1-\theta}$, where $\theta$ takes values from simulated draws from the Beta posterior.
+The above plot illustrates the density of the posterior distribution of the log-odds values $\phi=log\frac{\theta}{1-\theta}$, where $\theta$ takes values from simulated draws from the Beta posterior for $\theta$.
 
 \newpage 
 
@@ -209,7 +209,7 @@ ggplot(df_plot2, aes(x=sigma2)) +
   theme_classic()
 
 ```
-The above plot illustrates the posterior distribution of $\sigma^{2}$.
+The above plot illustrates the posterior distribution of $\sigma^{2}$, where $\sigma^{2}$ is unknown with non-informative prior $p\Big(\sigma^{2}\Big) \propto \frac{1}{\sigma^{2}}$, and the posterior for $\sigma^{2}$ is the $inv-\chi^{2}(\nu,\tau^2)$ distribution. Thus the posterior of $\sigma^{2}$ is given by the expression $\sigma^{2} = \frac{\nu \cdot \tau^{2}}{X}$, where $X \sim Scale-inv-\chi^{2}(\nu,\tau^{2})$. (https://en.wikipedia.org/wiki/Scaled_inverse_chi-squared_distribution)
 
 ## Task 2b
 
@@ -354,12 +354,14 @@ df_plot3 <- data.frame("k"=k, "posterior_vals"=norm_posterior)
 #plot 
 ggplot(df_plot3) +
   geom_line(aes(x=k, y=posterior_vals),colour = "red4", size = 1) +
-  ggtitle("Posterior Distribution of k") +
+  ggtitle("Normalised Posterior Distribution of k") +
   xlab("K Values") +
   ylab("Density") +
   theme_classic()
 
 ```
+
+The above density graph illustrates the normalised posterior distribution of $\kappa$ for the wind direction data over a fine grid of $\kappa$ values.
 
 ## Task 3b
 
