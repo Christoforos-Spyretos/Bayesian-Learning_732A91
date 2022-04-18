@@ -1,0 +1,146 @@
+---
+title: "Bayesian Learning (732A91) Lab2 Report"
+author: "Christoforos Spyretos (chrsp415) & Marketos Damigos (marda352)"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
+library(mvtnorm)
+library(ggplot2)
+
+```
+
+# Assignment 1 *Linear and polynomial regression*
+
+```{r echo=FALSE}
+#reading data
+temperatures <- read.table("TempLambohov.txt",header = TRUE)
+
+```
+
+## Task 1a
+
+```{r}
+#given values
+m_0 <- c(-10,100,-100)
+omega_0 <- 0.02 * diag(3)
+n_0 <- 3
+sigma2_0 <- 2
+
+```
+
+```{r}
+set.seed(123456)
+
+#number of draws
+N <-10
+
+#matrix to save b0, b1, b2 
+b <- matrix(NA,nrow = N, ncol = length(m_0))
+
+#matrix to save the predicted temperatures
+pred_temp <- matrix(NA, nrow = N, ncol = nrow(temperatures))
+
+for(i in 1:N){
+    
+    #Inv-x simulator from lab 1
+    sigma2 <- n_0 * sigma2_0 / rchisq(1,n_0)
+    
+    #generate b0,b1,b2
+    b[i,]<-rmvnorm(1,mean = m_0, sigma = sigma2*solve(omega_0))
+    
+    #quadratic regression model
+    pred_temp[i,]<-b[i,1] + b[i,2]*temperatures$time + b[i,3]*(temperatures$time^2) + rnorm(1,0,sigma2)
+}
+
+```
+
+```{r}
+#preparing data for plot
+rownames(pred_temp) <- c("pred1","pred2","pred3","pred4","pred5","pred6","pred7","pred8","pred9","pred10")
+pred_temp <- t(pred_temp)
+
+plot_data <- cbind(temperatures,pred_temp)
+
+plot_data <- melt(plot_data, id=c("time","temp"))
+```
+
+```{r}
+ggplot(plot_data)+
+  geom_line(aes(x = time, y = value, color = variable)) +
+  geom_point(aes(x = time, y = temp), color = "navy") + 
+  xlab("Time") + ylab("Temperature") +
+  theme(legend.position = "none")
+```
+
+## Task 1b
+
+```{r}
+set.seed(123456)
+
+X <- cbind(rep(1,nrow(temperatures)), temperatures$time, temperatures$time^2)
+y <- temperatures$temp
+b_hat<-solve(t(X)%*%X)%*%t(X)%*%y
+
+N <- 100
+
+b <- matrix(0,N,length(m_0)) # initiate betas matrix
+sigma2 <- rep(0,N) # initiate sigmas matrix
+
+for (i in 1:N){
+  
+  #calculate mu_n
+  m_n <- solve( t(X) %*% X + omega_0 )%*%(t(X) %*% X %*% b_hat + omega_0 %*% m_0 )
+  
+  #calculate omega_n
+  omega_n <- t(X) %*% X + omega_0
+  
+  #calculate n_n
+  n_n <- n_0 + nrow(temperatures)
+  
+  #calculate sigma_n
+  sigma2_n <- (n_0 * sigma2_0 + (t(y) %*% y + t(m_0) %*% omega_0 %*% m_0 - t(m_n) %*% omega_n %*% m_n))/n_n
+
+  #Inv-x simulator from lab 1
+  sigma2[i] <- n_n * sigma2_n / rchisq(1,n_n)
+  
+  #generate b0,b1,b2
+  b[i,] <- rmvnorm(1,mean=m_n,sigma=sigma2[i]*solve(omega_n))
+  
+}
+
+hist(sigma2,col="gray",border="blue")
+
+hist(b[,1],col="gray",border = "blue")
+
+hist(b[,2],col="gray",border = "blue")
+
+hist(b[,3],col="gray",border = "blue")
+```
+
+```{r}
+pred_temp2 <- matrix(NA,nrow(b),nrow(temperatures))
+
+for (i in 1:nrow(b)){
+  pred_temp2[i,]<-b[i,1] + b[i,2]*temperatures$time + b[i,3]*(temperatures$time^2)
+}
+
+post_median <- c()
+for (i in 1:ncol(pred_temp2)){
+  post_median[i] <- median(pred_temp2[,i])
+}
+
+intervals <- matrix(NA, nrow = 2, ncol = ncol(pred_temp2))
+for(i in 1:ncol(pred_temp2)){
+  intervals[,i] <- quantile(pred_temp2[,i], probs = c(0.025,0.975))
+}
+
+plot(temperatures[,1],temperatures[,2],panel.first=grid(25,25),ylab = "temp",xlab="time",
+     main="Plot of the data and curves",pch="o")
+lines(temperatures$time,intervals[1,],col="blue",lwd=2)
+lines(temperatures$time,intervals[2,],col="orange",lwd=2)
+lines(temperatures$time,post_median,col="red",lwd=2)
+```

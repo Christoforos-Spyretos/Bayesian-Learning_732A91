@@ -64,7 +64,7 @@ $$
 
 Where $a_{0}$ and $b_{0}$ are the arguments of the Beta prior, s is the number of successes and f is the number of failures.
 
-In the next page, the graphs represent the mean value and the standard deviation of the Beta distribution for $\theta$ and the mean value $E[\theta|y]$ (red line)and standard deviation $SD[\theta|y]$ from the posterior $\theta|y \sim Beta(a_{0} + s, b_{0} + f )$ (blue points), where $y=y_{1},y_{2},....,y_{n}$.
+In the next page, the graphs represent the mean value and the standard deviation of the Beta distribution for $\theta$ and the mean value $E[\theta|y]$ (red line) and standard deviation $SD[\theta|y]$ from the posterior $\theta|y \sim Beta(a_{0} + s, b_{0} + f )$ (blue points), where $y=y_{1},y_{2},....,y_{n}$.
 
 
 ```{r echo=FALSE, warning=FALSE}
