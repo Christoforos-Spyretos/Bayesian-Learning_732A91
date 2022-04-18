@@ -64,7 +64,7 @@ $$
 
 Where $a_{0}$ and $b_{0}$ are the arguments of the Beta prior, s is the number of successes and f is the number of failures.
 
-In the next page, the graphs represent the mean value and the standard deviation of the Beta distribution for $\theta$ and the mean value $E[\theta|y]$ and standard deviation $SD[\theta|y]$ from the posterior $\theta|y \sim Beta(a_{0} + s, b_{0} + f )$, where $y=y_{1},y_{2},....,y_{n}$.
+In the next page, the graphs represent the mean value and the standard deviation of the Beta distribution for $\theta$ and the mean value $E[\theta|y]$ (red line)and standard deviation $SD[\theta|y]$ from the posterior $\theta|y \sim Beta(a_{0} + s, b_{0} + f )$ (blue points), where $y=y_{1},y_{2},....,y_{n}$.
 
 
 ```{r echo=FALSE, warning=FALSE}
@@ -123,7 +123,7 @@ ggplot(df_plot1) +
 
 ```
 
-From the above plots, it could be seen that both posterior's mean and standard deviation values converge to the actual mean and standard deviation values, respectively. More specifically, between 0 and approximately 250 draws in both graphs, some of the posterior's values abstain from true values. However, after the 250 draws, the posterior's values start to converge to the true ones in both graphs.
+From the above plots, it could be seen that both posterior's mean and standard deviation values converge to the actual mean and standard deviation values, respectively. More specifically, between 0 and approximately 250 draws in both graphs, some of the posterior's values abstain from true values. However, after the 250 draws, the posterior's values start to converge more and more to the true ones in both graphs.
 
 ## Task 1b
 
@@ -192,6 +192,7 @@ tau_2 <- sum((log(obs) - 3.5)^2)/9
 set.seed(12345)
 sigma2 <- c()
 for (i in 1:10000){
+  # simulate from chi squared distribution
   sigma2[i] <- 9*tau_2 / rchisq(1,9)
 }
 
@@ -209,8 +210,9 @@ ggplot(df_plot2, aes(x=sigma2)) +
   theme_classic()
 
 ```
-The above plot illustrates the posterior distribution of $\sigma^{2}$, where $\sigma^{2}$ is unknown with non-informative prior $p\Big(\sigma^{2}\Big) \propto \frac{1}{\sigma^{2}}$, and the posterior for $\sigma^{2}$ is the $inv-\chi^{2}(\nu,\tau^2)$ distribution. Thus the posterior of $\sigma^{2}$ is given by the expression $\sigma^{2} = \frac{\nu \cdot \tau^{2}}{X}$, where $X \sim Scale-inv-\chi^{2}(\nu,\tau^{2})$. (https://en.wikipedia.org/wiki/Scaled_inverse_chi-squared_distribution)
 
+The above plot illustrates the posterior distribution of $\sigma^{2}$, where $\sigma^{2}$ is unknown with non-informative prior $p(\sigma^{2}) \propto \frac{1}{\sigma^{2}}$. The posterior for $\sigma^{2}$ is the $inv-\chi^{2}(n,\tau^2)$ distribution, $\sigma^{2} = \frac{X}{\tau^2 \cdot n}$. The posterior of $\sigma^{2}$ is given by the expression $p(\sigma^{2}) = \frac{n \cdot \tau^{2}}{X}$, where $X \sim \chi^{2}(n)$, n is the number of observations and $\tau^{2} = \frac {\sum_{i=1}^{\nu}log(y_{i}-\mu)^{2}}{n}$.
+ 
 ## Task 2b
 
 ```{r}
@@ -360,7 +362,7 @@ ggplot(df_plot3) +
   theme_classic()
 
 ```
-
+ 
 The above density graph illustrates the normalised posterior distribution of $\kappa$ for the wind direction data over a fine grid of $\kappa$ values.
 
 ## Task 3b
