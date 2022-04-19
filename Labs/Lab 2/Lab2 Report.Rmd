@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
 library(mvtnorm)
 library(ggplot2)
+library(tidyr)
 
 ```
 
@@ -23,7 +24,7 @@ temperatures <- read.table("TempLambohov.txt",header = TRUE)
 
 ## Task 1a
 
-```{r}
+```{r echo=FALSE}
 #given values
 m_0 <- c(-10,100,-100)
 omega_0 <- 0.02 * diag(3)
@@ -32,7 +33,7 @@ sigma2_0 <- 2
 
 ```
 
-```{r}
+```{r echo=FALSE}
 set.seed(123456)
 
 #number of draws
@@ -58,37 +59,64 @@ for(i in 1:N){
 
 ```
 
-```{r}
+```{r echo=FALSE}
 #preparing data for plot
+
 rownames(pred_temp) <- c("pred1","pred2","pred3","pred4","pred5","pred6","pred7","pred8","pred9","pred10")
 pred_temp <- t(pred_temp)
 
 plot_data <- cbind(temperatures,pred_temp)
 
-plot_data <- melt(plot_data, id=c("time","temp"))
+plot_data <- pivot_longer(plot_data, c(3:12))
 ```
 
-```{r}
+```{r echo=FALSE}
 ggplot(plot_data)+
-  geom_line(aes(x = time, y = value, color = variable)) +
   geom_point(aes(x = time, y = temp), color = "navy") + 
-  xlab("Time") + ylab("Temperature") +
-  theme(legend.position = "none")
+  geom_line(aes(x = time, y = value, color = name)) +
+  theme(legend.position="right") +
+  guides(color=guide_legend("Predictions")) +
+  xlab("Time") +
+  ylab("Temperature") +
+  theme_classic()
 ```
+
+The above graph illustrates the actual temperatures (blue points) and a collection of regression curves; one for each draw from the prior. The graph provides mixed results as half of the curves are not in the region of the actual temperatures. Thus, the the prior hyperparameters must be changed.
 
 ## Task 1b
 
-```{r}
+The joint posterior for $\beta$ and $\sigma^2$ is given by:
+
+$\beta|\sigma^2,y \sim N(\mu_{n},\sigma^2\Omega_{n}^{-1})$ \
+$\sigma^2|y \sim Inv-\chi^2(\nu_{n},\sigma_{n}^{2})$
+
+Where:
+
+$\widehat{\beta} = (X'X)^{-1}X'y$ \
+$\mu_{n}=(X'X+\Omega_{0})^{-1}(X'X\widehat{\beta}+\Omega_{0}\mu_{0})$\
+$\Omega_{n} = X'X + \Omega_{0}$ \
+$\nu_{n}=\nu_{0} + n$ \
+$\sigma_{n}^2=\frac{\nu_{0}\sigma_{0}^2+(y'y+\mu_{0}'\Omega_{0}\mu_{0}-\mu_{n}'\Omega_{n}\mu_{n})}{\nu_{n}}$
+
+## i)
+
+```{r echo=FALSE}
 set.seed(123456)
 
+#matrix with the times (1st collum with 1 because of the intercept)
 X <- cbind(rep(1,nrow(temperatures)), temperatures$time, temperatures$time^2)
+#vector with target values
 y <- temperatures$temp
+#calculate b hat
 b_hat<-solve(t(X)%*%X)%*%t(X)%*%y
 
+#number of samples
 N <- 100
 
-b <- matrix(0,N,length(m_0)) # initiate betas matrix
-sigma2 <- rep(0,N) # initiate sigmas matrix
+#matrix to store the beta values
+b <- matrix(0,N,length(m_0)) 
+#vector to store sigma2 values
+sigma2 <- c()
 
 for (i in 1:N){
   
@@ -112,35 +140,143 @@ for (i in 1:N){
   
 }
 
-hist(sigma2,col="gray",border="blue")
-
-hist(b[,1],col="gray",border = "blue")
-
-hist(b[,2],col="gray",border = "blue")
-
-hist(b[,3],col="gray",border = "blue")
 ```
 
-```{r}
+```{r echo=FALSE}
+#df of sigma2 for plot
+plot_df_sigma2 <- data.frame("sigma2" = sigma2)
+
+#histogram of sigma2
+ggplot(plot_df_sigma2, aes(x=sigma2)) +
+  geom_histogram(bins = 30, color = "navy", fill = "steelblue2", aes(y=..density..)) +
+  geom_density(colour = "red4", size = 1) +
+  ggtitle("sigma2 Posterior Distribution") +
+  xlab("sigma2 Values") +
+  ylab("Density") +
+  theme_classic()
+
+```
+
+```{r echo=FALSE}
+#df of betas for plot
+plot_df_b <- data.frame("b0" = b[,1], "b1" = b[,2], "b2" = b[,3])
+
+```
+
+```{r echo=FALSE}
+#histogram of sigma2
+ggplot(plot_df_b, aes(x=b0)) +
+  geom_histogram(bins = 30, color = "navy", fill = "steelblue2", aes(y=..density..)) +
+  geom_density(colour = "red4", size = 1) +
+  ggtitle("b0 Posterior Distribution") +
+  xlab("b0 Values") +
+  ylab("Density") +
+  theme_classic()
+
+```
+
+```{r echo=FALSE}
+#histogram of sigma2
+ggplot(plot_df_b, aes(x=b1)) +
+  geom_histogram(bins = 30, color = "navy", fill = "steelblue2", aes(y=..density..)) +
+  geom_density(colour = "red4", size = 1) +
+  ggtitle("b1 Posterior Distribution") +
+  xlab("b1 Values") +
+  ylab("Density") +
+  theme_classic()
+
+```
+
+```{r echo=FALSE}
+#histogram of sigma2
+ggplot(plot_df_b, aes(x=b2)) +
+  geom_histogram(bins = 30, color = "navy", fill = "steelblue2", aes(y=..density..)) +
+  geom_density(colour = "red4", size = 1) +
+  ggtitle("b2 Posterior Distribution") +
+  xlab("b2 Values") +
+  ylab("Density") +
+  theme_classic()
+
+```
+
+## ii)
+
+```{r echo=FALSE}
+#Task 1b ii
+
+#matrix to store the predicted values
 pred_temp2 <- matrix(NA,nrow(b),nrow(temperatures))
 
+#calculate the predicted values
 for (i in 1:nrow(b)){
   pred_temp2[i,]<-b[i,1] + b[i,2]*temperatures$time + b[i,3]*(temperatures$time^2)
 }
 
+#calculate posterior's median for every value of time
 post_median <- c()
 for (i in 1:ncol(pred_temp2)){
   post_median[i] <- median(pred_temp2[,i])
 }
 
+#calculate the 2.5 and 97.5 posterior percentiles of f (time) 
 intervals <- matrix(NA, nrow = 2, ncol = ncol(pred_temp2))
 for(i in 1:ncol(pred_temp2)){
   intervals[,i] <- quantile(pred_temp2[,i], probs = c(0.025,0.975))
 }
 
-plot(temperatures[,1],temperatures[,2],panel.first=grid(25,25),ylab = "temp",xlab="time",
-     main="Plot of the data and curves",pch="o")
-lines(temperatures$time,intervals[1,],col="blue",lwd=2)
-lines(temperatures$time,intervals[2,],col="orange",lwd=2)
-lines(temperatures$time,post_median,col="red",lwd=2)
 ```
+
+```{r echo=FALSE}
+#df for plot
+plot_df_1b2 <- data.frame("temperatures" = temperatures$temp,
+                          "time" = temperatures$time,
+                          "interval1" = intervals[1,],
+                          "interval2" = intervals[2,],
+                          "medians" = post_median)
+
+#scatterplot of the temperatures & curve of the posterior median & curves for the 95% equal tail posterior probability intervals
+ggplot(data = plot_df_1b2) +
+  geom_point(aes(x = time, y = temperatures, color="navy")) +
+  geom_line(aes(x =time, y = medians, color = "red4")) +
+  geom_line(aes(x = time, y = interval1, color = "green4")) +
+  geom_line(aes(x = time, y = interval2, color = "purple4")) +
+  theme(legend.position="right") +
+  scale_color_identity(guide = "legend",
+                       name = "",
+                       breaks=c("navy", "red4", "green4", "purple4"),
+                       labels = c("Temperatures",
+                                "Posterior's Median", 
+                                "2.5 posterior percentile",
+                                "97.5 posterior percentile")) +
+  xlab("Time") +
+  ylab("Temperatures") +
+  theme_classic()
+
+```
+
+It is evident that 95% equal tail posterior probability intervals do not contain most of the data points. It should not contain most of the data points, because the interval illustrates the region of the beta parameter where the true parameter value lies with 95% certainty.
+
+## Task 1c 
+
+It is given that the regression function is $f(time) = \beta_{0} + \beta_{1} \cdot time + \beta_{2} \cdot time^{2}$. In order to locate the time with the highest expected temperature; the time, where f(time) is maximal, is needed to be found. Thus, the derivative of $f(time)$ is needed to be found and set it equal to zero to find the maximal.
+
+Set $time = x$; thus, $f(x) = \beta_{0} + \beta_{1} \cdot x + \beta_{2} \cdot x^{2}$
+
+Calculate the derivative, $f'(x) = \beta_{1} + 2 \cdot \beta_{2} \cdot x$
+
+Find the maximal:
+$f'(x) = 0 \Leftrightarrow \beta_{1} + 2 \cdot \beta_{2} \cdot x = 0 \Leftrightarrow x = \frac{-\beta_{1}}{2 \cdot \beta_{2}}$
+
+```{r}
+#Task 1c
+
+#getting the time with the highest expected temperature by using the above expression
+max_temp <- max(-b[,2]/(2*b[,3]))
+
+```
+
+The time with the highest expected temperature is approximately 0.56.
+
+## Task 1d
+
+Estimating a polynomial regression of order 8 with the suspicion that higher order terms may not be needed, might lead to overfitting the data. The main problem that could lead to overfitting is the number of knots. A solution to this problem is to introduce a regularised prior, $\beta_{j}|\sigma^2 \sim N(\mu_{0},\frac{\sigma^2}{\lambda})$, where $Omega_0 = \lambda \cdot I$.
