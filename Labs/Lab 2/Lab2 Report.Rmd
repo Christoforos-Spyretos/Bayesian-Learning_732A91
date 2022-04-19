@@ -17,15 +17,15 @@ library(tidyr)
 # Assignment 1 *Linear and polynomial regression*
 
 ```{r echo=FALSE}
+#__________________Assignment 1__________________#
+
 #reading data
 temperatures <- read.table("TempLambohov.txt",header = TRUE)
 
 ```
 
-## Task 1a
-
 ```{r echo=FALSE}
-#given values
+#given parameters
 m_0 <- c(-10,100,-100)
 omega_0 <- 0.02 * diag(3)
 n_0 <- 3
@@ -33,7 +33,11 @@ sigma2_0 <- 2
 
 ```
 
+## Task 1a
+
 ```{r echo=FALSE}
+#Task 1a
+
 set.seed(123456)
 
 #number of draws
@@ -61,13 +65,13 @@ for(i in 1:N){
 
 ```{r echo=FALSE}
 #preparing data for plot
-
 rownames(pred_temp) <- c("pred1","pred2","pred3","pred4","pred5","pred6","pred7","pred8","pred9","pred10")
 pred_temp <- t(pred_temp)
 
 plot_data <- cbind(temperatures,pred_temp)
 
 plot_data <- pivot_longer(plot_data, c(3:12))
+
 ```
 
 ```{r echo=FALSE}
@@ -79,6 +83,7 @@ ggplot(plot_data)+
   xlab("Time") +
   ylab("Temperature") +
   theme_classic()
+
 ```
 
 The above graph illustrates the actual temperatures (blue points) and a collection of regression curves; one for each draw from the prior. The graph provides mixed results as half of the curves are not in the region of the actual temperatures. Thus, the the prior hyperparameters must be changed.
@@ -101,6 +106,8 @@ $\sigma_{n}^2=\frac{\nu_{0}\sigma_{0}^2+(y'y+\mu_{0}'\Omega_{0}\mu_{0}-\mu_{n}'\
 ## i)
 
 ```{r echo=FALSE}
+#Task 1b i
+
 set.seed(123456)
 
 #matrix with the times (1st collum with 1 because of the intercept)
@@ -272,6 +279,7 @@ $f'(x) = 0 \Leftrightarrow \beta_{1} + 2 \cdot \beta_{2} \cdot x = 0 \Leftrighta
 
 #getting the time with the highest expected temperature by using the above expression
 max_temp <- max(-b[,2]/(2*b[,3]))
+max_temp
 
 ```
 
@@ -280,3 +288,79 @@ The time with the highest expected temperature is approximately 0.56.
 ## Task 1d
 
 Estimating a polynomial regression of order 8 with the suspicion that higher order terms may not be needed, might lead to overfitting the data. The main problem that could lead to overfitting is the number of knots. A solution to this problem is to introduce a regularised prior, $\beta_{j}|\sigma^2 \sim N(\mu_{0},\frac{\sigma^2}{\lambda})$, where $Omega_0 = \lambda \cdot I$.
+
+# Assignment 2 *Posterior approximation for classification with logistic regression*
+
+```{r}
+#__________________Assignment 2__________________#
+
+#reading data
+women<-read.table("WomenAtWork.dat",header=T)
+
+```
+
+```{r}
+#Task 2a
+
+#given parameteres
+tau <- 5 
+
+```
+
+## Task 2a
+
+```{r}
+#target value
+y = women$Work
+
+#prior inputs
+# Select which covariates/features to include
+X <- as.matrix(women[2:8])
+Xnames <- colnames(X)
+
+Npar <- dim(X)[2]
+
+# Setting up the prior
+mu <- as.matrix(rep(0,Npar)) # Prior mean vector
+Sigma <- tau^2 * diag(Npar) # Prior covariance matrix
+
+# Functions that returns the log posterior for the logistic and probit regression.
+# First input argument of this function must be the parameters we optimize on, 
+# i.e. the regression coefficients beta.
+
+LogPostLogistic <- function(betas,y,X,mu,Sigma){
+  linPred <- X%*%betas
+  logLik <- sum( linPred*y - log(1 + exp(linPred)) )
+  if (abs(logLik) == Inf) logLik = -20000 # Likelihood is not finite, stear the optimizer away from here!
+  logPrior <- dmvnorm(betas, mu, Sigma, log=TRUE)
+  
+  return(logLik + logPrior)
+}
+
+# Select the initial values for beta
+initVal <- matrix(0,Npar,1)
+
+# The argument control is a list of options to the optimizer optim, where fnscale=-1 means that we minimize 
+# the negative log posterior. Hence, we maximize the log posterior.  
+OptimRes <- optim(initVal,LogPostLogistic,gr=NULL,y,X,mu,Sigma,method=c("BFGS"),control=list(fnscale=-1),hessian=TRUE)
+```
+
+```{r}
+names(OptimRes$par) <- Xnames # Naming the coefficient by covariates
+approxPostStd <- sqrt(diag(-solve(OptimRes$hessian))) # Computing approximate standard deviations.
+names(approxPostStd) <- Xnames # Naming the coefficient by covariates
+print('The posterior mode is:')
+print(OptimRes$par)
+print('The approximate posterior standard deviation is:')
+approxPostStd <- sqrt(diag(-solve(OptimRes$hessian)))
+print(approxPostStd)
+```
+
+```{r}
+interval <- c(OptimRes$par[6] - 1.96 * approxPostStd[6], OptimRes$par[6] + 1.96 * approxPostStd[6])
+interval
+```
+
+# *Appendix*
+```{r ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
+```
