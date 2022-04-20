@@ -88,6 +88,8 @@ ggplot(plot_data)+
 
 The above graph illustrates the actual temperatures (blue points) and a collection of regression curves, one for each draw from the prior. The graph provides generally good results as almost all of the curves are placed in the region of the actual temperatures. Two represent a little higher temperatures but follow the same pattern as the actual ones. Only one curve shows but results; in the very beginning has really low temperatures, but in the end, the curve is in the region of the actual temperatures. Thus, the prior hyper-parameters do not need a significant change. 
 
+\newpage
+
 ## Task 1b
 
 The joint posterior for $\beta$ and $\sigma^2$ is given by:
@@ -261,7 +263,7 @@ ggplot(data = plot_df_1b2) +
 
 ```
 
-It is evident that 95% equal tail posterior probability intervals do not contain most of the data points. It should not contain most of the data points, because the interval illustrates uncertainty around the median value.
+It is evident that 95% equal tail posterior probability intervals do not contain most data points. It should not contain most data points because the interval illustrates uncertainty around the median value.
 
 ## Task 1c 
 
@@ -287,15 +289,15 @@ The time with the highest expected temperature is approximately 0.56.
 
 ## Task 1d
 
-Estimating a polynomial regression of order 8 with the suspicion that higher order terms may not be needed, might lead to overfitting the data. The main problem that could lead to overfitting is the number of knots. A solution to this problem is to introduce a regularised prior, $\beta_{j}|\sigma^2 \sim N(\mu_{0},\frac{\sigma^2}{\lambda})$, where $Omega_0 = \lambda \cdot I$.
+Estimating a polynomial regression of order 8 with the suspicion that higher-order terms may not be needed because it might lead to overfitting the data. The main problem that could lead to overfitting is the number of knots. A solution to this problem is to introduce a regularised prior, $\beta_{j}|\sigma^2 \sim N(\mu_{0},\frac{\sigma^2}{\lambda})$, where $Omega_0 = \lambda \cdot I$.
 
 # Assignment 2 *Posterior approximation for classification with logistic regression*
 
-```{r echo=}
+```{r echo=FALSE}
 #__________________Assignment 2__________________#
 
 #reading data
-women <- read.delim("WomenAtWork.dat",header=TRUE)
+women <- read.table("WomenAtWork.dat",header=TRUE)
 
 ```
 
@@ -310,6 +312,8 @@ tau <- 5
 ## Task 2a
 
 ```{r echo=FALSE}
+#the below code snippets from a demo of logistic regression in Lecture 6
+
 #target value
 y <- women$Work
 
@@ -343,17 +347,19 @@ initVal <- matrix(0,Npar,1)
 # The argument control is a list of options to the optimizer optim, where fnscale=-1 means that we minimize
 # the negative log posterior. Hence, we maximize the log posterior.
 OptimRes <- optim(initVal,LogPostLogistic,gr=NULL,y,X,mu,Sigma,method=c("BFGS"),control=list(fnscale=-1),hessian=TRUE)
+
 ```
 
 ```{r echo=FALSE, message=FALSE}
 names(OptimRes$par) <- Xnames # Naming the coefficient by covariates
 approxPostStd <- sqrt(diag(-solve(OptimRes$hessian))) # Computing approximate standard deviations.
 names(approxPostStd) <- Xnames # Naming the coefficient by covariates
-print('The posterior mode is:')
-print(OptimRes$par)
-print('The approximate posterior standard deviation is:')
+#print('The posterior mode is:')
+#print(OptimRes$par)
+#print('The approximate posterior standard deviation is:')
 approxPostStd <- sqrt(diag(-solve(OptimRes$hessian)))
-print(approxPostStd)
+#print(approxPostStd)
+
 ```
 
 The below table illustrates the $J_{y}^{-1}(\widetilde{\beta})$.
@@ -362,6 +368,7 @@ The below table illustrates the $J_{y}^{-1}(\widetilde{\beta})$.
 invHessian <- data.frame("invhes" = -solve(OptimRes$hessian))
 colnames(invHessian) <- c("Constant","HusbandInc","EducYears","ExpYears","Age","NSmallChild","NBigChild")
 knitr::kable(invHessian)
+
 ```
 
 The below table illustrates the posterior mode values of every feature of the dataset.
@@ -382,13 +389,13 @@ The below table illustrates the approximate posterior standard deviation values 
 df_approxPostStd <- data.frame("approxPostStd" =sqrt(diag(-solve(OptimRes$hessian))))
 colnames(df_approxPostStd) <- c("Value")
 rownames(df_approxPostStd) <-c("Constant","HusbandInc","EducYears","ExpYears","Age","NSmallChild","NBigChild")
-knitr::kable(df_post_mode)
+knitr::kable(df_approxPostStd)
 
 ```
 
-The approximate 95% equal tail posterior probability interval for the regression coefficient to the variable *NSmallChild* is given by the below expression.
+\newpage
 
-$[E(\theta|y) - 1.96 \cdot SD(\theta|y),E(\theta|y) + 1.96 \cdot SD(\theta|y)]$
+The approximate 95% equal tail posterior probability interval for the regression coefficient to the variable *NSmallChild* is given by the expression, $[E(\theta|y) - 1.96 \cdot SD(\theta|y),E(\theta|y) + 1.96 \cdot SD(\theta|y)]$.
 
 ```{r echo=FALSE}
 interval <- c(OptimRes$par[6] - 1.96 * approxPostStd[6], OptimRes$par[6] + 1.96 * approxPostStd[6])
@@ -399,7 +406,7 @@ knitr::kable(df_interval)
 
 ```
 
-The above interval has a lower and an upper bound less than 0; as a result, it strengthens the assumption mentioned above that the *NSmallChild* feature plays a significant role if a woman is employed
+The above interval has a lower and an upper bound less than 0; as a result, it strengthens the assumption mentioned above that the *NSmallChild* feature plays a significant role if a woman is employed.
 
 ## Task 2b
 
@@ -476,6 +483,8 @@ pred2 <- prediction2(1000, women2, OptimRes$par, -solve(OptimRes$hessian), 11)
 hist(pred2, col = "steelblue2", main = "Posterior Predictive Distribution For The Number Of Women", xlab = "Number Of Women", ylab = "Density",probability = TRUE)
 
 ```
+
+\newpage
 
 # *Appendix*
 ```{r ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
