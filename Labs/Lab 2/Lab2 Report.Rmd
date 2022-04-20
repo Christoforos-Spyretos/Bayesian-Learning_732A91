@@ -86,7 +86,7 @@ ggplot(plot_data)+
 
 ```
 
-The above graph illustrates the actual temperatures (blue points) and a collection of regression curves; one for each draw from the prior. The graph provides mixed results as half of the curves are not in the region of the actual temperatures. Thus, the the prior hyperparameters must be changed.
+The above graph illustrates the actual temperatures (blue points) and a collection of regression curves, one for each draw from the prior. The graph provides generally good results as almost all of the curves are placed in the region of the actual temperatures. Two represent a little higher temperatures but follow the same pattern as the actual ones. Only one curve shows but results; in the very beginning has really low temperatures, but in the end, the curve is in the region of the actual temperatures. Thus, the prior hyper-parameters do not need a significant change. 
 
 ## Task 1b
 
@@ -171,7 +171,7 @@ plot_df_b <- data.frame("b0" = b[,1], "b1" = b[,2], "b2" = b[,3])
 ```
 
 ```{r echo=FALSE}
-#histogram of sigma2
+#histogram of b0
 ggplot(plot_df_b, aes(x=b0)) +
   geom_histogram(bins = 30, color = "navy", fill = "steelblue2", aes(y=..density..)) +
   geom_density(colour = "red4", size = 1) +
@@ -183,7 +183,7 @@ ggplot(plot_df_b, aes(x=b0)) +
 ```
 
 ```{r echo=FALSE}
-#histogram of sigma2
+#histogram of b1
 ggplot(plot_df_b, aes(x=b1)) +
   geom_histogram(bins = 30, color = "navy", fill = "steelblue2", aes(y=..density..)) +
   geom_density(colour = "red4", size = 1) +
@@ -195,7 +195,7 @@ ggplot(plot_df_b, aes(x=b1)) +
 ```
 
 ```{r echo=FALSE}
-#histogram of sigma2
+#histogram of b2
 ggplot(plot_df_b, aes(x=b2)) +
   geom_histogram(bins = 30, color = "navy", fill = "steelblue2", aes(y=..density..)) +
   geom_density(colour = "red4", size = 1) +
@@ -244,13 +244,13 @@ plot_df_1b2 <- data.frame("temperatures" = temperatures$temp,
 #scatterplot of the temperatures & curve of the posterior median & curves for the 95% equal tail posterior probability intervals
 ggplot(data = plot_df_1b2) +
   geom_point(aes(x = time, y = temperatures, color="navy")) +
-  geom_line(aes(x =time, y = medians, color = "red4")) +
-  geom_line(aes(x = time, y = interval1, color = "green4")) +
-  geom_line(aes(x = time, y = interval2, color = "purple4")) +
+  geom_line(aes(x =time, y = medians, color = "red2")) +
+  geom_line(aes(x = time, y = interval1, color = "green3")) +
+  geom_line(aes(x = time, y = interval2, color = "yellow3")) +
   theme(legend.position="right") +
   scale_color_identity(guide = "legend",
                        name = "",
-                       breaks=c("navy", "red4", "green4", "purple4"),
+                       breaks=c("navy", "red2", "green3", "yellow3"),
                        labels = c("Temperatures",
                                 "Posterior's Median", 
                                 "2.5 posterior percentile",
@@ -261,7 +261,7 @@ ggplot(data = plot_df_1b2) +
 
 ```
 
-It is evident that 95% equal tail posterior probability intervals do not contain most of the data points. It should not contain most of the data points, because the interval illustrates the region of the beta parameter where the true parameter value lies with 95% certainty.
+It is evident that 95% equal tail posterior probability intervals do not contain most of the data points. It should not contain most of the data points, because the interval illustrates uncertainty around the median value.
 
 ## Task 1c 
 
@@ -291,27 +291,27 @@ Estimating a polynomial regression of order 8 with the suspicion that higher ord
 
 # Assignment 2 *Posterior approximation for classification with logistic regression*
 
-```{r}
+```{r echo=}
 #__________________Assignment 2__________________#
 
 #reading data
-women<-read.table("WomenAtWork.dat",header=T)
+women <- read.delim("WomenAtWork.dat",header=TRUE)
 
 ```
 
-```{r}
+```{r echo=FALSE}
 #Task 2a
 
 #given parameteres
-tau <- 5 
+tau <- 5
 
 ```
 
 ## Task 2a
 
-```{r}
+```{r echo=FALSE}
 #target value
-y = women$Work
+y <- women$Work
 
 #prior inputs
 # Select which covariates/features to include
@@ -325,7 +325,7 @@ mu <- as.matrix(rep(0,Npar)) # Prior mean vector
 Sigma <- tau^2 * diag(Npar) # Prior covariance matrix
 
 # Functions that returns the log posterior for the logistic and probit regression.
-# First input argument of this function must be the parameters we optimize on, 
+# First input argument of this function must be the parameters we optimize on,
 # i.e. the regression coefficients beta.
 
 LogPostLogistic <- function(betas,y,X,mu,Sigma){
@@ -333,19 +333,19 @@ LogPostLogistic <- function(betas,y,X,mu,Sigma){
   logLik <- sum( linPred*y - log(1 + exp(linPred)) )
   if (abs(logLik) == Inf) logLik = -20000 # Likelihood is not finite, stear the optimizer away from here!
   logPrior <- dmvnorm(betas, mu, Sigma, log=TRUE)
-  
+
   return(logLik + logPrior)
 }
 
 # Select the initial values for beta
 initVal <- matrix(0,Npar,1)
 
-# The argument control is a list of options to the optimizer optim, where fnscale=-1 means that we minimize 
-# the negative log posterior. Hence, we maximize the log posterior.  
+# The argument control is a list of options to the optimizer optim, where fnscale=-1 means that we minimize
+# the negative log posterior. Hence, we maximize the log posterior.
 OptimRes <- optim(initVal,LogPostLogistic,gr=NULL,y,X,mu,Sigma,method=c("BFGS"),control=list(fnscale=-1),hessian=TRUE)
 ```
 
-```{r}
+```{r echo=FALSE, message=FALSE}
 names(OptimRes$par) <- Xnames # Naming the coefficient by covariates
 approxPostStd <- sqrt(diag(-solve(OptimRes$hessian))) # Computing approximate standard deviations.
 names(approxPostStd) <- Xnames # Naming the coefficient by covariates
@@ -356,9 +356,125 @@ approxPostStd <- sqrt(diag(-solve(OptimRes$hessian)))
 print(approxPostStd)
 ```
 
-```{r}
+The below table illustrates the $J_{y}^{-1}(\widetilde{\beta})$.
+
+```{r echo=FALSE}
+invHessian <- data.frame("invhes" = -solve(OptimRes$hessian))
+colnames(invHessian) <- c("Constant","HusbandInc","EducYears","ExpYears","Age","NSmallChild","NBigChild")
+knitr::kable(invHessian)
+```
+
+The below table illustrates the posterior mode values of every feature of the dataset.
+
+```{r echo=FALSE}
+df_post_mode <- data.frame("post_mode" = OptimRes$par)
+colnames(df_post_mode) <- c("Value")
+rownames(df_post_mode) <- c("Constant","HusbandInc","EducYears","ExpYears","Age","NSmallChild","NBigChild")
+knitr::kable(df_post_mode)
+
+```
+
+From the above table, it could be seen that the posterior mode of the feature *NSmallChild* has the lowest value; thus, it could be assumed that this variable plays a significant role if a woman is employed.
+
+The below table illustrates the approximate posterior standard deviation values of every feature of the dataset.
+
+```{r echo=FALSE}
+df_approxPostStd <- data.frame("approxPostStd" =sqrt(diag(-solve(OptimRes$hessian))))
+colnames(df_approxPostStd) <- c("Value")
+rownames(df_approxPostStd) <-c("Constant","HusbandInc","EducYears","ExpYears","Age","NSmallChild","NBigChild")
+knitr::kable(df_post_mode)
+
+```
+
+The approximate 95% equal tail posterior probability interval for the regression coefficient to the variable *NSmallChild* is given by the below expression.
+
+$[E(\theta|y) - 1.96 \cdot SD(\theta|y),E(\theta|y) + 1.96 \cdot SD(\theta|y)]$
+
+```{r echo=FALSE}
 interval <- c(OptimRes$par[6] - 1.96 * approxPostStd[6], OptimRes$par[6] + 1.96 * approxPostStd[6])
-interval
+df_interval <- data.frame("lower_bound" = interval[1], "upper_bound" = interval[2])
+colnames(df_interval) <- c("lower bound", "upper bound")
+rownames(df_interval) <- c("95% Equal Tail Credible Interval")
+knitr::kable(df_interval)
+
+```
+
+The above interval has a lower and an upper bound less than 0; as a result, it strengthens the assumption mentioned above that the *NSmallChild* feature plays a significant role if a woman is employed
+
+## Task 2b
+
+```{r echo=FALSE, warning=FALSE}
+set.seed(1234567)
+women2 <- c(1,20,12,8,43,0,2)
+
+#function that classifies if the women work or not
+prediction <- function(N,data,posterior_mode,posterior_covariates){
+
+  #generate betas
+  b <- rmvnorm(N, mean= posterior_mode, sigma = posterior_covariates)
+
+  #calculating the the logistic regression model
+  res <- exp(data %*% t(b))/(1 + exp(data %*% t(b)))
+
+  return(res)
+}
+
+#predictions
+pred <- prediction(1000, women2, OptimRes$par, -solve(OptimRes$hessian))
+
+#df for plot
+pred_women <- data.frame("pred" = t(pred))
+
+ggplot(pred_women, aes(x=pred)) +
+  geom_histogram(bins = 50, color = "navy", fill = "steelblue2", aes(y=..density..)) +
+  geom_density(colour = "red4", size = 1) +
+  scale_x_continuous(limits = c(0,1)) +
+  ggtitle("Posterior Predictive Distribution") +
+  xlab("Probabilities") +
+  ylab("Density") +
+  theme_classic()
+
+```
+
+From the above plot, it could be assumed that a 43-year-old woman with two children (7 and 10 years old), 12 years of education, 8 years of experience, and a husband with an income of 20.000 SEK; is more likely to be employed, but there is still a considerable number of occasions that she might without work.
+
+## Task 2c
+
+```{r echo=FALSE, warning=FALSE}
+set.seed(1234567)
+
+prediction2 <- function(N,data,posterior_mode,posterior_covariates, nwomen){
+  
+  #generate betas
+  b <- rmvnorm(N, mean= posterior_mode, sigma = posterior_covariates)
+  
+  #calculating the the logistic regression model 
+  pred <- exp(data %*% t(b))/(1 + exp(data %*% t(b)))
+  
+  #binomial distribution 
+  res <- c()
+  
+  for (i in 1:nwomen){
+    #binomial distribution 
+    res[i] <- sum(rbinom(n = 7,size = 1,prob = pred))
+  }
+  
+  return(res)
+}
+
+pred2 <- prediction2(1000, women2, OptimRes$par, -solve(OptimRes$hessian), 11)
+
+# pred_women2 <- data.frame("pred" = pred2)
+# 
+# ggplot(pred_women2 , aes(x=pred)) +
+#   geom_histogram(color = "navy", fill = "steelblue2") +
+#   ggtitle("Posterior Predictive Distribution For The Number Of Women") +
+#   xlab("Number Of Women") +
+#   ylab("Density") +
+#   theme_classic()
+
+hist(pred2, col = "steelblue2", main = "Posterior Predictive Distribution For The Number Of Women", xlab = "Number Of Women", ylab = "Density",probability = TRUE)
+
 ```
 
 # *Appendix*
