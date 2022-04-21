@@ -484,6 +484,8 @@ hist(pred2, col = "steelblue2", main = "Posterior Predictive Distribution For Th
 
 ```
 
+From the above histogram it could be seen that all the observations have a density around 0.5.
+
 \newpage
 
 # *Appendix*
