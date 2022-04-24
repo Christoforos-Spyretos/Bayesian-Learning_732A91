@@ -395,18 +395,20 @@ knitr::kable(df_approxPostStd)
 
 \newpage
 
-The approximate 95% equal tail posterior probability interval for the regression coefficient to the variable *NSmallChild* is given by the expression, $[E(\theta|y) - 1.96 \cdot SD(\theta|y),E(\theta|y) + 1.96 \cdot SD(\theta|y)]$.
+The approximate 95% equal tail posterior probability interval for the regression coefficient to the variable *NSmallChild* has a lower and an upper bound less than 0; as a result, it strengthens the assumption mentioned above that the *NSmallChild* feature plays a significant role if a woman is employed.
 
 ```{r echo=FALSE}
-interval <- c(OptimRes$par[6] - 1.96 * approxPostStd[6], OptimRes$par[6] + 1.96 * approxPostStd[6])
+#draw b
+b_draws <- rmvnorm(n = 1000, mean = OptimRes$par, sigma = -solve(OptimRes$hessian))
+
+#calculate quantiles
+interval <- quantile(b_draws[,6], c(0.025, 0.975)) 
 df_interval <- data.frame("lower_bound" = interval[1], "upper_bound" = interval[2])
 colnames(df_interval) <- c("lower bound", "upper bound")
 rownames(df_interval) <- c("95% Equal Tail Credible Interval")
 knitr::kable(df_interval)
 
 ```
-
-The above interval has a lower and an upper bound less than 0; as a result, it strengthens the assumption mentioned above that the *NSmallChild* feature plays a significant role if a woman is employed.
 
 ## Task 2b
 
@@ -458,7 +460,7 @@ prediction2 <- function(N,data,posterior_mode,posterior_covariates, nwomen){
   #calculating the the logistic regression model 
   pred <- exp(data %*% t(b))/(1 + exp(data %*% t(b)))
   
-  #binomial distribution 
+  #vector to store results 
   res <- c()
   
   for (i in 1:nwomen){
@@ -469,6 +471,7 @@ prediction2 <- function(N,data,posterior_mode,posterior_covariates, nwomen){
   return(res)
 }
 
+#predictions
 pred2 <- prediction2(1000, women2, OptimRes$par, -solve(OptimRes$hessian), 11)
 
 # pred_women2 <- data.frame("pred" = pred2)
