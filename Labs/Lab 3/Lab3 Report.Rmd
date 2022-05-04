@@ -1,0 +1,367 @@
+---
+title: "Bayesian Learning (732A91) Lab3 Report"
+author: "Christoforos Spyretos (chrsp415) & Marketos Damigos (marda352)"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
+library(ggplot2)
+library(mvtnorm)
+
+```
+
+# Assignment 1 *Gibbs sampler for a normal model*
+
+```{r echo=FALSE}
+#____________________________Assignment 1____________________________#
+
+#Reading & preparing data 
+precipitation <- as.data.frame(readRDS("Precipitation.rds"))
+colnames(precipitation) <- "records"
+log_records <- log(precipitation$records)
+```
+
+## Task 1a
+
+The full conditional posteriors are:
+$$
+\begin{aligned}
+\mu|\sigma^{2},x &\sim N(\mu_{n},\tau_{n}^{2}) \\
+\sigma^{2}|\mu,x &\sim Inv-\chi^{2}\Big(\nu_{n},\frac{\nu_{0} \sigma_{0}^{2} + \sum_{i=1}^{n}(x_{i}-\mu)^{2}}{n + \nu_{0}}   \Big)
+\end{aligned}
+$$
+
+```{r echo=FALSE}
+# Task 1a
+set.seed(1234567890)
+
+
+n <- length(log_records)
+n_0 <- 1 
+mu_0 <- mean(log_records)
+sigma2_0 <- var(log_records) 
+tau2_0 <- 1
+
+# mu_prop <- rnorm(n = 1, mean = mu_0, sqrt(tau2_0)) 
+# sigma2_prop <-  n_0*sigma2_0 / rchisq(1,n_0)
+
+sigma2 <- sigma2_0
+mu_gibbs <- c()
+sigma2_gibbs <- c(sigma2)
+
+N <- 1000
+for (i in 1:N) {
+  
+  w <- (n/sigma2)/((n/sigma2) + (1/tau2_0))
+  mu_n <- w * mean(log_records) + (1 - w) * mu_0
+  tau2_n <- 1 / (n/sigma2 + 1/tau2_0)
+
+  mu <- rnorm(n = 1, mean = mu_n, sd = tau2_n)
+
+  previous_sigma2 <- sigma2
+
+  n_n <- n_0 + n
+
+  sigma2 <- (n_n*((n_0*sigma2_0+sum((log_records-mu)^2))/ n_n))/rchisq(1,n_n)
+
+  if(i==1){
+    mu_gibbs <- c(mu)
+    sigma2_gibbs <- c(sigma2)
+  }else{
+    mu_gibbs <- append(mu_gibbs,c(mu,mu))
+    sigma2_gibbs <- append(sigma2_gibbs,c(previous_sigma2,sigma2))
+  }
+}
+
+```
+
+```{r echo=FALSE}
+mu_rho <- acf(mu_gibbs)
+
+IF_mu <- 1+2*sum(mu_rho$acf[-1])
+
+```
+
+```{r echo=FALSE}
+sigma2_rho <- acf(sigma2_gibbs)
+
+IF_sigma2 <- 1+2*sum(sigma2_rho$acf[-1])
+
+```
+
+```{r echo=FALSE}
+IFs_df <- data.frame("mu"=IF_mu, "sigma2"=IF_sigma2)
+rownames(IFs_df)<-c("Inefficiency Factors")
+knitr::kable(IFs_df)
+
+```
+
+```{r echo=FALSE}
+#df for plot
+plot_df_traj <- data.frame("mu"=mu_gibbs, "sigma2"=sigma2_gibbs)
+
+#first 200 points for plot
+plot_df_traj <- plot_df_traj[1:200,] # test- just take the first x rows
+
+# trajectories of the sampled Markov chains.
+ggplot(plot_df_traj) +
+  geom_path(aes(x = mu, y = sigma2), color = "navy") + 
+  geom_point(aes(x = mu[1], y = sigma2[1]), color = "red2", size = 2) +
+  geom_point(aes(x = mu[200], y = sigma2[200]), color = "green2", size = 2) +
+  ggtitle("Trajectories of the first 200 points") + 
+  ylab("sigma2") + 
+  xlab("mu") +
+  theme_classic()
+
+```
+
+## Task b
+
+```{r}
+#Task b
+
+set.seed(1234567890)
+
+#predicted draws
+predictions <- rnorm(nrow(precipitation),mu_gibbs,sqrt(sigma2_gibbs))
+
+#kernel density estimation
+density_actual <- density(precipitation$records)
+density_pred <- density(exp(predictions))
+
+#df for plot
+plot_df_dens <- data.frame( "actual_x" = density_actual$x,
+                            "actual_y" = density_actual$y,
+                            "pred_x" = density_pred$x,
+                            "pred_y" = density_pred$y)
+
+ggplot(plot_df_dens) + 
+  geom_line(aes(x=actual_x, y=actual_y), color = "navy") +
+  geom_line(aes(x=pred_x, y=pred_y), color = "red2") +
+  theme(legend.position="right") +
+  scale_color_identity(guide = "legend",
+                       name = "",
+                       breaks=c("navy", "red2"),
+                       labels = c("Actual Values",
+                                "Predicted Values")) +
+  xlab("Value") +
+  ylab("Density") +
+  theme_classic()
+  
+```
+
+# Assignment 2 *Metropolis Random Walk for Poisson regression*
+
+```{r echo=FALSE}
+#__________________Assignment 2__________________#
+
+#Reading data 
+ebay <- read.table("eBayNumberOfBidderData.dat",header=TRUE)
+```
+
+## Task a
+
+```{r echo=FALSE}
+# Task a
+
+#glm function, + 0 in order to do not input the covariate Const
+model <- glm(formula = nBids ~ 0 + ., data = ebay, family = poisson )
+
+#print the summary of the model 
+summary(model)
+```
+
+## Task b
+
+Poisson regression model: $y_{i}|beta \sim Poisson[exp(x_{i}^{T}\beta)]$, $i = 1,2,....,n$
+
+The likelihood function of the Poisson regression model is:
+
+$$
+L(\theta|X,Y)= \prod_{i}^{n} \frac{e^{Y_{i}\theta^{T}X_{i}}e^{-\theta^{T}X_{i}}}{Y_{i}!}
+$$
+
+The log-likelihood of the Poisson regression model is:
+
+$$
+l(\theta|X,Y) = log\Big(L(\theta|X,Y)\Big) = \sum_{i}^{n} \Big(Y_{i}\theta^{T}X_{i} - e^{\theta^{T}X{i}} - log(Y_{i}) \Big)
+$$
+
+In the above formula, $\theta$ appears in the first two terms; therefore, given that we are only interested in the finding of the best value of $\theta$, we drop the $log(Y_{i})$.  
+
+The final log-likelihood of the Poisson regression model is:
+
+$$
+l(\theta|X,Y) = \sum_{i}^{n} \Big(Y_{i}\theta^{T}X_{i} - e^{\theta^{T}X{i}} \Big)
+$$
+
+https://en.wikipedia.org/wiki/Poisson_regression
+
+```{r echo=FALSE}
+#the below code snippets from a demo of logistic regression in Lecture 6
+
+#target value
+y <- ebay$nBids
+
+#prior inputs
+# Select which covariates/features to include
+X <- as.matrix(ebay[2:10])
+Xnames <- colnames(X)
+
+Npar <- dim(X)[2]
+
+# Setting up the prior
+mu <- as.matrix(rep(0,Npar)) # Prior mean vector
+Sigma <- 100 * solve(t(X)%*%X) # Prior covariance matrix
+
+# Functions that returns the log posterior for the logistic and probit regression.
+# First input argument of this function must be the parameters we optimize on,
+# i.e. the regression coefficients beta.
+
+LogPostPoisson <- function(betas,y,X,mu,Sigma){
+  linPred <- X%*%betas
+  #loglikelihood of Poisson regression
+  logLik <- sum(linPred*y - exp(linPred))
+  if (abs(logLik) == Inf) logLik = -20000 # Likelihood is not finite, stear the optimizer away from here!
+  logPrior <- dmvnorm(betas, mu, Sigma, log=TRUE)
+
+  return(logLik + logPrior)
+}
+
+# Select the initial values for beta
+initVal <- matrix(0,Npar,1)
+
+# The argument control is a list of options to the optimizer optim, where fnscale=-1 means that we minimize
+# the negative log posterior. Hence, we maximize the log posterior.
+OptimRes <- optim(initVal,LogPostPoisson,gr=NULL,y,X,mu,Sigma,method=c("BFGS"),control=list(fnscale=-1),hessian=TRUE)
+
+```
+
+```{r echo=FALSE, message=FALSE}
+names(OptimRes$par) <- Xnames # Naming the coefficient by covariates
+approxPostStd <- sqrt(diag(-solve(OptimRes$hessian))) # Computing approximate standard deviations.
+names(approxPostStd) <- Xnames # Naming the coefficient by covariates
+#print('The posterior mode is:')
+#print(OptimRes$par)
+#print('The approximate posterior standard deviation is:')
+approxPostStd <- sqrt(diag(-solve(OptimRes$hessian)))
+#print(approxPostStd)
+
+```
+
+The below table illustrates the $J_{y}^{-1}(\widetilde{\beta})$.
+
+```{r echo=FALSE}
+invHessian <- data.frame("invhes" = -solve(OptimRes$hessian))
+colnames(invHessian) <- c("Constant","PowerSeller","VerifyID","Sealed","MinBlem","MajBlem","LargNeg","LogBook","MinBidShare")
+knitr::kable(invHessian)
+
+```
+
+The below table illustrates the posterior mode values of every feature of the dataset.
+
+```{r echo=FALSE}
+df_post_mode <- data.frame("post_mode" = OptimRes$par)
+colnames(df_post_mode) <- c("Value")
+rownames(df_post_mode) <- c("Constant","PowerSeller","VerifyID","Sealed","MinBlem","MajBlem","LargNeg","LogBook","MinBidShare")
+knitr::kable(df_post_mode)
+
+```
+
+The below table illustrates the approximate posterior standard deviation values of every feature of the dataset.
+
+```{r echo=FALSE}
+df_approxPostStd <- data.frame("approxPostStd" =sqrt(diag(-solve(OptimRes$hessian))))
+colnames(df_approxPostStd) <- c("Value")
+rownames(df_approxPostStd) <-c("Constant","PowerSeller","VerifyID","Sealed","MinBlem","MajBlem","LargNeg","LogBook","MinBidShare")
+knitr::kable(df_approxPostStd)
+```
+
+## Task c
+
+For the Random walk Metropolis algorithm:
+
+1) Initialize $\theta^{0}$ and iterate for i = 1, 2, ... \
+
+2) Sample proposal: $\theta_{p}|\theta^{(i-1)} \sim N(\theta^{(i-1)}, c \cdot \Sigma)$, where $\Sigma=J_{\hat{\theta},y}^{-1}$ \
+
+3) Compute the acceptance probability: $\alpha = min \Big(1,\frac{p(\theta_{p}|y)}{p(\theta^{(i-1)}|y)}$ , where : \
+
+$\frac{p(\theta_{p}|y)}{p(\theta^{(i-1)}|y)} = exp\Big[log(p(\theta_{p}|y)) - log(p(\theta^{(i-1)}|y))$
+
+4) With probability $\alpha$ set $\theta^{(i)}=\theta_{p}$ and $\theta^{(i)}=\theta^{(i-1)}$
+
+
+
+```{r}
+RWMSampler <- function(N, logPostFunc, init_beta, constant, cov_mat, target_val, features, mu){
+  
+  #matrix to store the betas 
+  betas <- matrix(NA, nrow = N,ncol = length(init_beta))
+  
+  betas[1,] <- init_beta
+  
+  for (i in 2:N){
+    #sample proposal
+    sample_proposal <- as.vector(rmvnorm(n=1,mean=betas[i-1,], constant*cov_mat))
+    
+    #LogPostPoisson <- function(betas,y,X,mu,Sigma)
+    #calculating the new posterior
+    post_new <- logPostFunc(sample_proposal, target_val, features, mu, cov_mat)
+    #calculating the old posterior
+    post_old <- logPostFunc( betas[i-1,], target_val, features, mu, cov_mat)
+    
+    #acceptance probability
+    ap <- min(1,exp(post_new - post_old))
+    
+    u <- runif(1,0,1)
+    
+    # check the if statement
+    if (ap < u){
+      betas[i,] <- post_new
+    } else{
+      betas[i,] <- betas[i-1,]
+    }
+  }
+  return(betas)
+}
+
+RWMbetas <- RWMSampler(1000,LogPostPoisson, runif(9,0,1), 2, -solve(OptimRes$hessian), ebay$nBids, as.matrix(ebay[2:10]), mu=OptimRes$par)
+```
+
+```{r}
+par(mfrow=c(3,3))
+for(i in 1:9){
+  plot(RWMbetas[,i],type="l",
+       main=paste('Covergence of ',colnames(X)[i]),
+       xlab='index',ylab='value',lwd=2,panel.first = grid(25,25))
+}
+```
+```
+
+
+## Task d
+
+```{r echo=FALSE}
+# auction <- c(1,1,0,1,0,1,0,1.2,0.8)
+# 
+# predictions <- function(betas,X,y){
+#   res <- 
+#   return(res)
+#}
+```
+
+
+
+
+
+
+
+
+
+# *Appendix*
+```{r ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
+```
