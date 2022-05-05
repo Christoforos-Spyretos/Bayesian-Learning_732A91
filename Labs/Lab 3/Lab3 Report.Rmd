@@ -10,7 +10,8 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
 library(ggplot2)
 library(mvtnorm)
-
+library(gridExtra)
+library(rstan)
 ```
 
 # Assignment 1 *Gibbs sampler for a normal model*
@@ -120,7 +121,7 @@ ggplot(plot_df_traj) +
 
 ## Task b
 
-```{r}
+```{r echo=FALSE}
 #Task b
 
 set.seed(1234567890)
@@ -294,34 +295,36 @@ $\frac{p(\theta_{p}|y)}{p(\theta^{(i-1)}|y)} = exp\Big[log(p(\theta_{p}|y)) - lo
 
 4) With probability $\alpha$ set $\theta^{(i)}=\theta_{p}$ and $\theta^{(i)}=\theta^{(i-1)}$
 
+```{r echo=FALSE}
+set.seed(1234567890)
 
-
-```{r}
 RWMSampler <- function(N, logPostFunc, init_beta, constant, cov_mat, target_val, features, mu){
   
-  #matrix to store the betas 
-  betas <- matrix(NA, nrow = N,ncol = length(init_beta))
+  init_sample = rmvnorm(1, init_beta, cov_mat)
   
-  betas[1,] <- init_beta
+  #matrix to store the betas 
+  betas <- matrix(nrow = N,ncol = length(init_sample))
+  
+  betas[1,] <- init_sample
   
   for (i in 2:N){
     #sample proposal
-    sample_proposal <- as.vector(rmvnorm(n=1,mean=betas[i-1,], constant*cov_mat))
+    sample_proposal <- as.vector(rmvnorm(1,betas[i-1,], constant*cov_mat))
     
     #LogPostPoisson <- function(betas,y,X,mu,Sigma)
     #calculating the new posterior
     post_new <- logPostFunc(sample_proposal, target_val, features, mu, cov_mat)
+    
     #calculating the old posterior
-    post_old <- logPostFunc( betas[i-1,], target_val, features, mu, cov_mat)
+    post_old <- logPostFunc(betas[i-1,], target_val, features, mu, cov_mat)
     
     #acceptance probability
-    ap <- min(1,exp(post_new - post_old))
+    a <- min(1,exp(post_new - post_old))
     
     u <- runif(1,0,1)
     
-    # check the if statement
-    if (ap < u){
-      betas[i,] <- post_new
+    if (u < a){
+      betas[i,] <- sample_proposal
     } else{
       betas[i,] <- betas[i-1,]
     }
@@ -329,37 +332,336 @@ RWMSampler <- function(N, logPostFunc, init_beta, constant, cov_mat, target_val,
   return(betas)
 }
 
-RWMbetas <- RWMSampler(1000,LogPostPoisson, runif(9,0,1), 2, -solve(OptimRes$hessian), ebay$nBids, as.matrix(ebay[2:10]), mu=OptimRes$par)
+
+RWMbetas <- RWMSampler(1000,LogPostPoisson, runif(9,0,1), 0.35, -solve(OptimRes$hessian), ebay$nBids, as.matrix(ebay[2:10]), OptimRes$par)
 ```
 
-```{r}
-par(mfrow=c(3,3))
-for(i in 1:9){
-  plot(RWMbetas[,i],type="l",
-       main=paste('Covergence of ',colnames(X)[i]),
-       xlab='index',ylab='value',lwd=2,panel.first = grid(25,25))
-}
-```
+```{r echo=FALSE}
+plot_df_RWM <- data.frame(RWMbetas)
+colnames(plot_df_RWM) <- c("b1","b2","b3","b4","b5","b6","b7","b8","b9")
+plot_df_RWM$iterations <- 1:1000
+
+p1 <-ggplot(plot_df_RWM) +
+  geom_line(aes(x=iterations, y=b1), color = "navy") + 
+  ggtitle("Convergence of b1") +
+  xlab("Iterations") +
+  ylab("b1") +
+  theme_classic()
+
+p2 <-ggplot(plot_df_RWM) +
+  geom_line(aes(x=iterations, y=b2), color = "navy") + 
+  ggtitle("Convergence of b2") +
+  xlab("Iterations") +
+  ylab("b2") +
+  theme_classic()
+
+p3 <-ggplot(plot_df_RWM) +
+  geom_line(aes(x=iterations, y=b3), color = "navy") + 
+  ggtitle("Convergence of b3") +
+  xlab("Iterations") +
+  ylab("b3") +
+  theme_classic()
+
+p4 <-ggplot(plot_df_RWM) +
+  geom_line(aes(x=iterations, y=b4), color = "navy") + 
+  ggtitle("Convergence of b4") +
+  xlab("Iterations") +
+  ylab("b4") +
+  theme_classic()
+
+p5 <-ggplot(plot_df_RWM) +
+  geom_line(aes(x=iterations, y=b5), color = "navy") + 
+  ggtitle("Convergence of b5") +
+  xlab("Iterations") +
+  ylab("b5") +
+  theme_classic()
+
+p6 <-ggplot(plot_df_RWM) +
+  geom_line(aes(x=iterations, y=b6), color = "navy") + 
+  ggtitle("Convergence of b6") +
+  xlab("Iterations") +
+  ylab("b6") +
+  theme_classic()
+
+p7 <-ggplot(plot_df_RWM) +
+  geom_line(aes(x=iterations, y=b7), color = "navy") + 
+  ggtitle("Convergence of b7") +
+  xlab("Iterations") +
+  ylab("b7") +
+  theme_classic()
+
+p8 <-ggplot(plot_df_RWM) +
+  geom_line(aes(x=iterations, y=b8), color = "navy") + 
+  ggtitle("Convergence of b8") +
+  xlab("Iterations") +
+  ylab("b8") +
+  theme_classic()
+
+p9 <-ggplot(plot_df_RWM) +
+  geom_line(aes(x=iterations, y=b9), color = "navy") + 
+  ggtitle("Convergence of b9") +
+  xlab("Iterations") +
+  ylab("b9") +
+  theme_classic()
+
+grid.arrange(p1,p2,p3,p4,p5,p6,p7,p8,p9, ncol=3)
 ```
 
 
 ## Task d
 
 ```{r echo=FALSE}
-# auction <- c(1,1,0,1,0,1,0,1.2,0.8)
-# 
-# predictions <- function(betas,X,y){
-#   res <- 
-#   return(res)
-#}
+set.seed(1234567890)
+
+auction <- c(1,1,0,1,0,1,0,1.2,0.8)
+
+nbidders = c()
+for(i in 1:nrow(RWMbetas)){
+   nbidders[i] <- rpois(1,exp(RWMbetas[i, ] %*% auction))
+}
+
+nbidders <- data.frame(nbidders)
+
+prob <- sum(nbidders$nbidders == 0)/(nrow(nbidders))
+
+ggplot(nbidders, aes(x=nbidders)) +
+  geom_histogram(bins = 200, color = "navy", fill = "steelblue2")+
+  ggtitle("Predictive Distribution") +
+  xlab("Number of Bidders") +
+  ylab("Density") +
+  theme_classic()
 ```
 
+# Assignment 3 *Time series models in Stan*
+
+## Task a
+
+```{r echo=FALSE}
+#__________________Assignment 3__________________#
+
+#Task 3a
+
+set.seed(12345)
+
+#AR(1)-process
+ar_process <- function(t,mu,phi,sigma2){
+  x <- c()
+  x[1] <- mu
+  for (i in 2:t){
+    x[i] <- mu + phi*(x[i-1]-mu) + rnorm(1,0,sqrt(sigma2))
+  }
+  return(x)
+}
+
+#given parameters
+mu <- 13
+sigma2 <- 3
+t <- 300
+phi <- seq(-1,1,0.25)
+
+res <- as.data.frame(sapply(phi, function(phi) ar_process(t,mu,phi,sigma2)))
+
+res$iterations <- 1:t
+
+```
+
+```{r echo=FALSE}
+#Time series plots of different phis
+
+p1 <-ggplot(res) +
+  geom_line(aes(x=iterations, y=V1), color = "navy") + 
+  ggtitle("AR(1)-process phi=-1") +
+  xlab("Iterations") +
+  ylab("x") +
+  theme_classic()
+
+p2 <-ggplot(res) +
+  geom_line(aes(x=iterations, y=V2), color = "navy") + 
+  ggtitle("AR(1)-process phi=-0.75") +
+  xlab("Iterations") +
+  ylab("x") +
+  theme_classic()
+
+p3 <-ggplot(res) +
+  geom_line(aes(x=iterations, y=V3), color = "navy") + 
+  ggtitle("AR(1)-process phi=-0.5") +
+  xlab("Iterations") +
+  ylab("x") +
+  theme_classic()
+
+p4 <-ggplot(res) +
+  geom_line(aes(x=iterations, y=V4), color = "navy") + 
+  ggtitle("AR(1)-process phi=-0.25") +
+  xlab("Iterations") +
+  ylab("x") +
+  theme_classic()
+
+p5 <-ggplot(res) +
+  geom_line(aes(x=iterations, y=V5), color = "navy") + 
+  ggtitle("AR(1)-process phi=0") +
+  xlab("Iterations") +
+  ylab("x") +
+  theme_classic()
+
+p6 <-ggplot(res) +
+  geom_line(aes(x=iterations, y=V6), color = "navy") + 
+  ggtitle("AR(1)-process phi=0.25") +
+  xlab("Iterations") +
+  ylab("x") +
+  theme_classic()
+
+p7 <-ggplot(res) +
+  geom_line(aes(x=iterations, y=V7), color = "navy") + 
+  ggtitle("AR(1)-process phi=0.5") +
+  xlab("Iterations") +
+  ylab("x") +
+  theme_classic()
+
+p8 <-ggplot(res) +
+  geom_line(aes(x=iterations, y=V8), color = "navy") + 
+  ggtitle("AR(1)-process phi=0.75") +
+  xlab("Iterations") +
+  ylab("x") +
+  theme_classic()
+
+p9 <-ggplot(res) +
+  geom_line(aes(x=iterations, y=V9), color = "navy") + 
+  ggtitle("AR(1)-process phi=1") +
+  xlab("Iterations") +
+  ylab("x") +
+  theme_classic()
+
+grid.arrange(p1,p2,p3,p4,p5,p6,p7,p8,p9, ncol=3)
+
+```
+
+## Task b 
+
+```{r echo=FALSE}
+# Task 3b
+
+set.seed(1234567890)
+
+#stan_model
+StanModel = '
+data {
+  int<lower=0> N; 
+  vector[N] x;
+}
+parameters {
+  real mu;
+  real<lower=0> sigma2;
+  real phi;
+}
+model {
+  mu ~ normal(0,100); // Normal with mean 0, st.dev. 100
+  sigma2 ~ scaled_inv_chi_square(1,2); // Scaled-inv-chi2 with nu 1,sigma 2
+  for(i in 2:N){
+    x[i] ~ normal( mu + phi*(x[i-1]-mu), sqrt(sigma2));
+  }
+}'
+
+#given parameters 
+phi1 <- 0.2
+phi2 <- 0.95
+
+#ar with given parameters
+res1 <- ar_process(t,mu,phi1,sigma2)
+res2 <- ar_process(t,mu,phi1,sigma2)
+
+data1 <- list(N=t, x=res1)
+data2 <- list(N=t, x=res2)
+
+warmup <- 1000
+niter <- 2000
 
 
+fit1 <- stan(model_code=StanModel,data=data1, warmup=warmup,iter=niter, chains = 4)
+fit2 <- stan(model_code=StanModel,data=data2, warmup=warmup,iter=niter, chains = 4)
 
+```
 
+## i)
 
+```{r echo=FALSE}
+fit1_summary <- summary(fit1)
+phi1_stats <- fit1_summary$summary[1:3,c(1,3,4,8,9)]
 
+knitr::kable(phi1_stats,caption = "Table for phi=0.2")
+
+```
+
+```{r echo=FALSE}
+fit2_summary <- summary(fit2)
+phi2_stats <- fit2_summary$summary[1:3,c(1,3,4,8,9)]
+
+knitr::kable(phi2_stats,caption = "Table for phi=0.95")
+
+```
+
+## ii)
+
+```{r echo=FALSE}
+postDraws1 <- data.frame(extract(fit1))
+postDraws1$iterations <- 1:4000
+
+ggplot(postDraws1) +
+  geom_line(aes(x=iterations, y=mu), color ="navy") +
+  ggtitle("Convergence Plot of mu with phi=0.2") +
+  xlab("Iterations") +
+  ylab("mu") +
+  theme_classic()
+
+ggplot(postDraws1) +
+  geom_line(aes(x=iterations, y=sigma2), color ="navy") +
+  ggtitle("Convergence Plot of mu with phi=0.2") +
+  xlab("Iterations") +
+  ylab("sigma2") +
+  theme_classic()
+
+ggplot(postDraws1) +
+  geom_line(aes(x=iterations, y=phi), color ="navy") +
+  ggtitle("Convergence Plot of mu with phi=0.2") +
+  xlab("Iterations") +
+  ylab("phi") +
+  theme_classic()
+
+ggplot(postDraws1) +
+  geom_point(aes(x=mu, y=phi), color ="navy") +
+  ggtitle("Joint Posterior phi=0.2") +
+  theme_classic()
+```
+
+```{r echo=FALSE}
+postDraws2 <- data.frame(extract(fit2))
+postDraws2$iterations <- 1:4000
+
+ggplot(postDraws2) +
+  geom_line(aes(x=iterations, y=mu), color ="navy") +
+  ggtitle("Convergence Plot of mu with phi=0.95") +
+  xlab("Iterations") +
+  ylab("mu") +
+  theme_classic()
+
+ggplot(postDraws2) +
+  geom_line(aes(x=iterations, y=sigma2), color ="navy") +
+  ggtitle("Convergence Plot of mu with phi=0.95") +
+  xlab("Iterations") +
+  ylab("sigma2") +
+  theme_classic()
+
+ggplot(postDraws2) +
+  geom_line(aes(x=iterations, y=phi), color ="navy") +
+  ggtitle("Convergence Plot of mu with phi=0.95") +
+  xlab("Iterations") +
+  ylab("phi") +
+  theme_classic()
+
+ggplot(postDraws2) +
+  geom_point(aes(x=mu, y=phi), color ="navy") +
+  ggtitle("Joint Posterior phi=0.95") +
+  theme_classic()
+```
 
 
 # *Appendix*
