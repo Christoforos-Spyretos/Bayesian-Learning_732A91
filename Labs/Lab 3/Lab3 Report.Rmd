@@ -604,8 +604,6 @@ parameters {
   real phi;
 }
 model {
-  mu ~ normal(0,100); // Normal with mean 0, st.dev. 100
-  sigma2 ~ scaled_inv_chi_square(1,2); // Scaled-inv-chi2 with nu 1,sigma 2
   for(i in 2:N){
     x[i] ~ normal( mu + phi*(x[i-1]-mu), sqrt(sigma2));
   }
@@ -625,10 +623,8 @@ data2 <- list(N=t, x=res2)
 warmup <- 1000
 niter <- 2000
 
-
 fit1 <- stan(model_code=StanModel,data=data1, warmup=warmup,iter=niter, chains = 4)
 fit2 <- stan(model_code=StanModel,data=data2, warmup=warmup,iter=niter, chains = 4)
-
 ```
 
 ## i)
@@ -650,70 +646,31 @@ knitr::kable(phi2_stats,caption = "Table for phi=0.95")
 ```
 
 ## ii)
+```{r}
+traceplot(fit1, pars = c("mu", "phi", "sigma2"), inc_warmup = TRUE, nrow = 3) 
+traceplot(fit2, pars = c("mu", "phi", "sigma2"), inc_warmup = TRUE, nrow = 3)
 
-```{r echo=FALSE}
-postDraws1 <- data.frame(extract(fit1))
-postDraws1$iterations <- 1:4000
-
-ggplot(postDraws1) +
-  geom_line(aes(x=iterations, y=mu), color ="navy") +
-  ggtitle("Convergence Plot of mu with phi=0.2") +
-  xlab("Iterations") +
-  ylab("mu") +
-  theme_classic()
-
-ggplot(postDraws1) +
-  geom_line(aes(x=iterations, y=sigma2), color ="navy") +
-  ggtitle("Convergence Plot of mu with phi=0.2") +
-  xlab("Iterations") +
-  ylab("sigma2") +
-  theme_classic()
-
-ggplot(postDraws1) +
-  geom_line(aes(x=iterations, y=phi), color ="navy") +
-  ggtitle("Convergence Plot of mu with phi=0.2") +
-  xlab("Iterations") +
-  ylab("phi") +
-  theme_classic()
-
-ggplot(postDraws1) +
-  geom_point(aes(x=mu, y=phi), color ="navy") +
-  ggtitle("Joint Posterior phi=0.2") +
-  theme_classic()
 ```
 
 ```{r echo=FALSE}
-postDraws2 <- data.frame(extract(fit2))
-postDraws2$iterations <- 1:4000
+draws1 <- extract(fit1)
+draws2 <- extract(fit2)
 
-ggplot(postDraws2) +
-  geom_line(aes(x=iterations, y=mu), color ="navy") +
-  ggtitle("Convergence Plot of mu with phi=0.95") +
-  xlab("Iterations") +
-  ylab("mu") +
-  theme_classic()
+df_draws1 <- data.frame("mu"=draws1$mu, "phi" =draws1$phi)
+df_draws2 <- data.frame("mu"=draws2$mu, "phi" =draws2$phi)
 
-ggplot(postDraws2) +
-  geom_line(aes(x=iterations, y=sigma2), color ="navy") +
-  ggtitle("Convergence Plot of mu with phi=0.95") +
-  xlab("Iterations") +
-  ylab("sigma2") +
-  theme_classic()
-
-ggplot(postDraws2) +
-  geom_line(aes(x=iterations, y=phi), color ="navy") +
-  ggtitle("Convergence Plot of mu with phi=0.95") +
-  xlab("Iterations") +
-  ylab("phi") +
-  theme_classic()
-
-ggplot(postDraws2) +
-  geom_point(aes(x=mu, y=phi), color ="navy") +
-  ggtitle("Joint Posterior phi=0.95") +
+ggplot(df_draws1) +
+  geom_point(aes(x=mu, y=phi), color = "navy") +
+  ggtitle("Joint Posterior of mu and phi") +
   theme_classic()
 ```
 
-
+```{r}
+ggplot(df_draws2) +
+  geom_point(aes(x=mu, y=phi), color = "navy") +
+  ggtitle("Joint Posterior of mu and phi") +
+  theme_classic()
+```
 # *Appendix*
 ```{r ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
 ```
