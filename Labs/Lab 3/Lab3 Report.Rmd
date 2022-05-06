@@ -25,7 +25,16 @@ colnames(precipitation) <- "records"
 log_records <- log(precipitation$records)
 ```
 
-## Task 1a
+## Task a)
+
+The normal model with conditionally conjugate prior is:
+
+$$
+\begin{aligned}
+\mu &\sim N(\mu_{0},\tau_{0}^{2}) \\
+\sigma^{2} &\sim Inv - \chi^{2}(\nu_{0},\sigma_{0}^{2})
+\end{aligned}
+$$
 
 The full conditional posteriors are:
 $$
@@ -35,39 +44,60 @@ $$
 \end{aligned}
 $$
 
+Where: 
+
+$$
+\begin{aligned}
+w & = \frac{\frac{n}{\sigma^{2}}}{\frac{n}{\sigma^{2}} + \frac{1}{\tau_{0}^{2}}} \\
+\mu_{n} &= w \overline{x} + (1-w)\mu_{0} \\
+\tau_{n}^{2} &= \frac{1}{\frac{n}{\sigma^{2}} + \frac{1}{\tau_{0}^{2}}} \\
+\nu_{n} &= \nu_{0} + n
+\end{aligned}
+$$
+
 ```{r echo=FALSE}
 # Task 1a
 set.seed(1234567890)
 
-
+# setting up prior parameters
 n <- length(log_records)
 n_0 <- 1 
 mu_0 <- mean(log_records)
 sigma2_0 <- var(log_records) 
 tau2_0 <- 1
 
+# normal model with conditionally conjugate prior
 # mu_prop <- rnorm(n = 1, mean = mu_0, sqrt(tau2_0)) 
 # sigma2_prop <-  n_0*sigma2_0 / rchisq(1,n_0)
 
+#sigma2 starting value
 sigma2 <- sigma2_0
+
+#vectors to store the samples 
 mu_gibbs <- c()
 sigma2_gibbs <- c(sigma2)
 
 N <- 1000
 for (i in 1:N) {
   
+  #calculating parameters 
   w <- (n/sigma2)/((n/sigma2) + (1/tau2_0))
   mu_n <- w * mean(log_records) + (1 - w) * mu_0
   tau2_n <- 1 / (n/sigma2 + 1/tau2_0)
-
+  
+  #calculating mu
   mu <- rnorm(n = 1, mean = mu_n, sd = tau2_n)
-
+  
+  #temporaly store the previous sigma2
   previous_sigma2 <- sigma2
-
+   
+  #calculating parameter
   n_n <- n_0 + n
 
+  #calculating sigma2
   sigma2 <- (n_n*((n_0*sigma2_0+sum((log_records-mu)^2))/ n_n))/rchisq(1,n_n)
-
+  
+  #conditions of how to store the samples
   if(i==1){
     mu_gibbs <- c(mu)
     sigma2_gibbs <- c(sigma2)
@@ -80,44 +110,64 @@ for (i in 1:N) {
 ```
 
 ```{r echo=FALSE}
-mu_rho <- acf(mu_gibbs)
+#calculating autocorrelation for mu
+mu_rho <- acf(mu_gibbs,main = "Autocorrelation of mu", col = "red4", lwd = 2)
 
+#callculating the inefficiency factor of mu
 IF_mu <- 1+2*sum(mu_rho$acf[-1])
 
 ```
 
-```{r echo=FALSE}
-sigma2_rho <- acf(sigma2_gibbs)
+The above graph illustrates the correlation coefficient of $\mu$ against the lag. The red bars illustrate the correlation coefficient of $\mu$ of each lag, and the blue lines represent the statistically significant boundaries. The ACF equals 1 for a lag 0, which is expected because the "first step" is always perfectly correlated with itself (the lag 0 autocorrelation is fixed at one by convention). Furthermore, as lag increases, the correlation gets closer to 0, which means the variables are unrelated between them.
 
+```{r echo=FALSE}
+#calculating autocorrelation for sigma2
+sigma2_rho <- acf(sigma2_gibbs,main = "Autocorrelation of sigma2", col = "red4", lwd = 2)
+
+#callculating the inefficiency factor of sigma2
 IF_sigma2 <- 1+2*sum(sigma2_rho$acf[-1])
 
 ```
 
+The above graph illustrates the correlation coefficient of $\sigma^{2}$ against the lag. The red bars illustrate the correlation coefficient of $\sigma^{2}$ of each lag, and the blue lines represent the statistically significant boundaries. The ACF equals 1 for a lag 0, which is expected because the "first step" is always perfectly correlated with itself (the lag zero autocorrelation is fixed at one by convention). Furthermore, as lag increases, the correlation gets closer to 0, which means the variables are unrelated between them. Finally, however, the ACF value crosses the "boundaries", which means that the variables are related when lag equals 12, 16 and 30.
+
+https://www.baeldung.com/cs/acf-pacf-plots-arma-modeling \
+https://en.wikipedia.org/wiki/Autocorrelation
+
+\
+
+The below table illustrates the inefficiency factors of $\mu$ and $\sigma^{2}$.
+
 ```{r echo=FALSE}
+#df with the inefficiency factors of mu & sigma
 IFs_df <- data.frame("mu"=IF_mu, "sigma2"=IF_sigma2)
 rownames(IFs_df)<-c("Inefficiency Factors")
 knitr::kable(IFs_df)
 
 ```
 
+The inefficiency factor equals 1 if there is not any autocorrelation. The inefficiency factor of $\mu$ is close to 1, which means this is an efficient sample. However, the inefficiency factor of $\sigma^{2}$ equals approximately 1.63, which means that the sample is efficient enough.
+
 ```{r echo=FALSE}
 #df for plot
 plot_df_traj <- data.frame("mu"=mu_gibbs, "sigma2"=sigma2_gibbs)
 
-#first 200 points for plot
-plot_df_traj <- plot_df_traj[1:200,] # test- just take the first x rows
+# plotting some amount of points 
+plot_df_traj <- plot_df_traj[1:200,]
 
-# trajectories of the sampled Markov chains.
+#trajectories of the sampled Markov chains.
 ggplot(plot_df_traj) +
   geom_path(aes(x = mu, y = sigma2), color = "navy") + 
   geom_point(aes(x = mu[1], y = sigma2[1]), color = "red2", size = 2) +
   geom_point(aes(x = mu[200], y = sigma2[200]), color = "green2", size = 2) +
-  ggtitle("Trajectories of the first 200 points") + 
+  ggtitle("Trajectories of the Sampled Markov chains.") + 
   ylab("sigma2") + 
   xlab("mu") +
   theme_classic()
 
 ```
+
+The above plot illustrates the trajectories of the first 200 point of the sample, the red dot is the starting point and the green dot is the ending point.
 
 ## Task b
 
