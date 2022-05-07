@@ -1,7 +1,6 @@
 ---
 title: "Bayesian Learning (732A91) Lab3 Report"
 author: "Christoforos Spyretos (chrsp415) & Marketos Damigos (marda352)"
-date: "`r Sys.Date()`"
 output: pdf_document
 ---
 
@@ -17,7 +16,7 @@ library(rstan)
 # Assignment 1 *Gibbs sampler for a normal model*
 
 ```{r echo=FALSE}
-#____________________________Assignment 1____________________________#
+#__________________Assignment 1__________________#
 
 #Reading & preparing data 
 precipitation <- as.data.frame(readRDS("Precipitation.rds"))
@@ -190,19 +189,21 @@ plot_df_dens <- data.frame( "actual_x" = density_actual$x,
                             "pred_y" = density_pred$y)
 
 ggplot(plot_df_dens) + 
-  geom_line(aes(x=actual_x, y=actual_y), color = "navy") +
-  geom_line(aes(x=pred_x, y=pred_y), color = "red2") +
+  geom_line(aes(x=actual_x, y=actual_y, color = "navy")) +
+  geom_line(aes(x=pred_x, y=pred_y, color = "red2")) +
   theme(legend.position="right") +
-  scale_color_identity(guide = "legend",
-                       name = "",
-                       breaks=c("navy", "red2"),
-                       labels = c("Actual Values",
-                                "Predicted Values")) +
+  scale_color_manual(values=c('navy','red2'),
+                     name = "",
+                     labels = c("Actual Values","Predicted Values")) +
   xlab("Value") +
   ylab("Density") +
   theme_classic()
   
 ```
+
+The posterior predictive density has almost the same pattern as the density of the actual values; thus it could be assumed that the the posterior's predictive values agree with the data.
+
+\newpage
 
 # Assignment 2 *Metropolis Random Walk for Poisson regression*
 
@@ -219,11 +220,15 @@ ebay <- read.table("eBayNumberOfBidderData.dat",header=TRUE)
 # Task a
 
 #glm function, + 0 in order to do not input the covariate Const
-model <- glm(formula = nBids ~ 0 + ., data = ebay, family = poisson )
+model <- glm(formula = nBids ~. -Const, data = ebay, family = poisson )
 
 #print the summary of the model 
 summary(model)
 ```
+
+The most significant covariates are the *VerifyID*, *Sealed*, *LogBook* and *MinBidShare*.
+
+\newpage
 
 ## Task b
 
@@ -252,6 +257,8 @@ $$
 https://en.wikipedia.org/wiki/Poisson_regression
 
 ```{r echo=FALSE}
+#Task b
+
 #the below code snippets from a demo of logistic regression in Lecture 6
 
 #target value
@@ -268,7 +275,7 @@ Npar <- dim(X)[2]
 mu <- as.matrix(rep(0,Npar)) # Prior mean vector
 Sigma <- 100 * solve(t(X)%*%X) # Prior covariance matrix
 
-# Functions that returns the log posterior for the logistic and probit regression.
+# Functions that returns the log posterior for the poisson and probit regression.
 # First input argument of this function must be the parameters we optimize on,
 # i.e. the regression coefficients beta.
 
@@ -306,13 +313,14 @@ approxPostStd <- sqrt(diag(-solve(OptimRes$hessian)))
 The below table illustrates the $J_{y}^{-1}(\widetilde{\beta})$.
 
 ```{r echo=FALSE}
-invHessian <- data.frame("invhes" = -solve(OptimRes$hessian))
+invHessian <- round(-solve(OptimRes$hessian), 5)
+invHessian <- data.frame("invhes" = invHessian)
 colnames(invHessian) <- c("Constant","PowerSeller","VerifyID","Sealed","MinBlem","MajBlem","LargNeg","LogBook","MinBidShare")
 knitr::kable(invHessian)
 
 ```
 
-The below table illustrates the posterior mode values of every feature of the dataset.
+The below table illustrates the posterior mode values of the features of the dataset, which are almost similar to the actual mode of the true posterior (see the summary of the glm model).
 
 ```{r echo=FALSE}
 df_post_mode <- data.frame("post_mode" = OptimRes$par)
@@ -337,15 +345,17 @@ For the Random walk Metropolis algorithm:
 
 1) Initialize $\theta^{0}$ and iterate for i = 1, 2, ... \
 
-2) Sample proposal: $\theta_{p}|\theta^{(i-1)} \sim N(\theta^{(i-1)}, c \cdot \Sigma)$, where $\Sigma=J_{\hat{\theta},y}^{-1}$ \
+2) Sample proposal: $\beta_{p}|\beta^{(i-1)} \sim N(\beta^{(i-1)}, c \cdot \Sigma)$, where $\Sigma=J_{\hat{\beta},y}^{-1}$ \
 
-3) Compute the acceptance probability: $\alpha = min \Big(1,\frac{p(\theta_{p}|y)}{p(\theta^{(i-1)}|y)}$ , where : \
+3) Compute the acceptance probability: $\alpha = min \Big(1,\frac{p(\beta{p}|y)}{p(\beta^{(i-1)}|y)}$ , where : \
 
-$\frac{p(\theta_{p}|y)}{p(\theta^{(i-1)}|y)} = exp\Big[log(p(\theta_{p}|y)) - log(p(\theta^{(i-1)}|y))$
+$\frac{p(\beta_{p}|y)}{p(\beta^{(i-1)}|y)} = exp\Big[log(p(\beta_{p}|y)) - log(p(\beta^{(i-1)}|y))$
 
-4) With probability $\alpha$ set $\theta^{(i)}=\theta_{p}$ and $\theta^{(i)}=\theta^{(i-1)}$
+4) With probability $\alpha$ set $\theta^{(i)}=\beta_{p}$ and $\beta^{(i)}=\beta^{(i-1)}$
 
 ```{r echo=FALSE}
+#Task c
+
 set.seed(1234567890)
 
 RWMSampler <- function(N, logPostFunc, init_beta, constant, cov_mat, target_val, features, mu){
@@ -384,83 +394,71 @@ RWMSampler <- function(N, logPostFunc, init_beta, constant, cov_mat, target_val,
 
 
 RWMbetas <- RWMSampler(1000,LogPostPoisson, runif(9,0,1), 0.35, -solve(OptimRes$hessian), ebay$nBids, as.matrix(ebay[2:10]), OptimRes$par)
+
 ```
 
 ```{r echo=FALSE}
 plot_df_RWM <- data.frame(RWMbetas)
-colnames(plot_df_RWM) <- c("b1","b2","b3","b4","b5","b6","b7","b8","b9")
-plot_df_RWM$iterations <- 1:1000
+colnames(plot_df_RWM) <- c("Constant", "PowerSeller","VerifyID","Sealed","Minblem","MajBlem","LargNeg","LogBook","MinBidShare")
+
+plot_df_RWM$Iterations <- 1:1000
 
 p1 <-ggplot(plot_df_RWM) +
-  geom_line(aes(x=iterations, y=b1), color = "navy") + 
-  ggtitle("Convergence of b1") +
-  xlab("Iterations") +
-  ylab("b1") +
+  geom_line( aes(x=Iterations, y=Constant), color = "navy") + 
+  geom_hline(yintercept = model$coefficients[1], color = "red3") +
   theme_classic()
 
 p2 <-ggplot(plot_df_RWM) +
-  geom_line(aes(x=iterations, y=b2), color = "navy") + 
-  ggtitle("Convergence of b2") +
-  xlab("Iterations") +
-  ylab("b2") +
+  geom_line(aes(x=Iterations, y=PowerSeller), color = "navy") + 
+  geom_hline(yintercept = model$coefficients[2], color = "red3") +
   theme_classic()
 
 p3 <-ggplot(plot_df_RWM) +
-  geom_line(aes(x=iterations, y=b3), color = "navy") + 
-  ggtitle("Convergence of b3") +
-  xlab("Iterations") +
-  ylab("b3") +
+  geom_line(aes(x=Iterations, y=VerifyID), color = "navy") + 
+    geom_hline(yintercept = model$coefficients[3], color = "red3") +
   theme_classic()
 
 p4 <-ggplot(plot_df_RWM) +
-  geom_line(aes(x=iterations, y=b4), color = "navy") + 
-  ggtitle("Convergence of b4") +
-  xlab("Iterations") +
-  ylab("b4") +
+  geom_line(aes(x=Iterations, y=Sealed), color = "navy") + 
+    geom_hline(yintercept = model$coefficients[4], color = "red3") +
   theme_classic()
 
 p5 <-ggplot(plot_df_RWM) +
-  geom_line(aes(x=iterations, y=b5), color = "navy") + 
-  ggtitle("Convergence of b5") +
-  xlab("Iterations") +
-  ylab("b5") +
+  geom_line(aes(x=Iterations, y=Minblem), color = "navy") + 
+    geom_hline(yintercept = model$coefficients[5], color = "red3") +
   theme_classic()
 
 p6 <-ggplot(plot_df_RWM) +
-  geom_line(aes(x=iterations, y=b6), color = "navy") + 
-  ggtitle("Convergence of b6") +
-  xlab("Iterations") +
-  ylab("b6") +
+  geom_line(aes(x=Iterations, y=MajBlem), color = "navy") + 
+    geom_hline(yintercept = model$coefficients[6], color = "red3") +
   theme_classic()
 
 p7 <-ggplot(plot_df_RWM) +
-  geom_line(aes(x=iterations, y=b7), color = "navy") + 
-  ggtitle("Convergence of b7") +
-  xlab("Iterations") +
-  ylab("b7") +
+  geom_line(aes(x=Iterations, y=LargNeg), color = "navy") + 
+    geom_hline(yintercept = model$coefficients[7], color = "red3") +
   theme_classic()
 
 p8 <-ggplot(plot_df_RWM) +
-  geom_line(aes(x=iterations, y=b8), color = "navy") + 
-  ggtitle("Convergence of b8") +
-  xlab("Iterations") +
-  ylab("b8") +
+  geom_line(aes(x=Iterations, y=LogBook), color = "navy") + 
+    geom_hline(yintercept = model$coefficients[8], color = "red3") +
   theme_classic()
 
 p9 <-ggplot(plot_df_RWM) +
-  geom_line(aes(x=iterations, y=b9), color = "navy") + 
-  ggtitle("Convergence of b9") +
-  xlab("Iterations") +
-  ylab("b9") +
+  geom_line(aes(x=Iterations, y=MinBidShare), color = "navy") + 
+    geom_hline(yintercept = model$coefficients[9], color = "red3") +
   theme_classic()
 
-grid.arrange(p1,p2,p3,p4,p5,p6,p7,p8,p9, ncol=3)
+grid.arrange(p1,p2,p3,p4,p5,p6,p7,p8,p9, nrow = 3)
+
 ```
 
+In the above plots, the blue lines illustrate the convergence of each $\widetilde{\beta}$ sampled by the Random Walk Metropolis algorithm, and the red lines represent the actual posterior mode. More specifically, it could be assumed that the mode of all $\widetilde{\beta}$ converges to the actual mode, although it is not great in some cases.
 
 ## Task d
 
 ```{r echo=FALSE}
+#Task d
+
 set.seed(1234567890)
 
 auction <- c(1,1,0,1,0,1,0,1.2,0.8)
@@ -482,14 +480,21 @@ ggplot(nbidders, aes(x=nbidders)) +
   theme_classic()
 ```
 
+The probability of no bidders in this new auction is approximately 40%.
+
+\newpage
+
 # Assignment 3 *Time series models in Stan*
 
 ## Task a
 
+The AR(1)-process is $x_t = \mu +\phi(x_{t-1}-\mu)+\epsilon_{t}$, where $\epsilon_{t}\overset{\text{iid}}{\sim}N(0,\sigma^{2})$. The initial value of $x_{1}$ is $\mu$ and then the process simulates values for $x_{t}$ for $t = 2, 3,..., T$ and return the vector $x_{1:T}$ containing all time
+points. The given parameters are $\mu = 13$; $\sigma^{2} = 3$ and $T = 300$.
+
 ```{r echo=FALSE}
 #__________________Assignment 3__________________#
 
-#Task 3a
+#Task a
 
 set.seed(12345)
 
@@ -520,75 +525,81 @@ res$iterations <- 1:t
 
 p1 <-ggplot(res) +
   geom_line(aes(x=iterations, y=V1), color = "navy") + 
-  ggtitle("AR(1)-process phi=-1") +
+  ggtitle("phi=-1") +
   xlab("Iterations") +
   ylab("x") +
   theme_classic()
 
 p2 <-ggplot(res) +
   geom_line(aes(x=iterations, y=V2), color = "navy") + 
-  ggtitle("AR(1)-process phi=-0.75") +
+  ggtitle("phi=-0.75") +
   xlab("Iterations") +
   ylab("x") +
   theme_classic()
 
 p3 <-ggplot(res) +
   geom_line(aes(x=iterations, y=V3), color = "navy") + 
-  ggtitle("AR(1)-process phi=-0.5") +
+  ggtitle("phi=-0.5") +
   xlab("Iterations") +
   ylab("x") +
   theme_classic()
 
 p4 <-ggplot(res) +
   geom_line(aes(x=iterations, y=V4), color = "navy") + 
-  ggtitle("AR(1)-process phi=-0.25") +
+  ggtitle("phi=-0.25") +
   xlab("Iterations") +
   ylab("x") +
   theme_classic()
 
 p5 <-ggplot(res) +
   geom_line(aes(x=iterations, y=V5), color = "navy") + 
-  ggtitle("AR(1)-process phi=0") +
+  ggtitle("phi=0") +
   xlab("Iterations") +
   ylab("x") +
   theme_classic()
 
 p6 <-ggplot(res) +
   geom_line(aes(x=iterations, y=V6), color = "navy") + 
-  ggtitle("AR(1)-process phi=0.25") +
+  ggtitle("phi=0.25") +
   xlab("Iterations") +
   ylab("x") +
   theme_classic()
 
 p7 <-ggplot(res) +
   geom_line(aes(x=iterations, y=V7), color = "navy") + 
-  ggtitle("AR(1)-process phi=0.5") +
+  ggtitle("phi=0.5") +
   xlab("Iterations") +
   ylab("x") +
   theme_classic()
 
 p8 <-ggplot(res) +
   geom_line(aes(x=iterations, y=V8), color = "navy") + 
-  ggtitle("AR(1)-process phi=0.75") +
+  ggtitle("phi=0.75") +
   xlab("Iterations") +
   ylab("x") +
   theme_classic()
 
 p9 <-ggplot(res) +
   geom_line(aes(x=iterations, y=V9), color = "navy") + 
-  ggtitle("AR(1)-process phi=1") +
+  ggtitle("phi=1") +
   xlab("Iterations") +
   ylab("x") +
   theme_classic()
 
-grid.arrange(p1,p2,p3,p4,p5,p6,p7,p8,p9, ncol=3)
+grid.arrange(p1,p2,p3,p4,p5,p6,p7,p8,p9, nrow=3)
 
 ```
 
+The autoregressive model specifies that the output variable depends linearly on its own previous values and on a stochastic term. In the above plots, when $\phi$ has a negative value and is close to 0, then the process still looks like white noise, but as $\phi$ approaches 1, there seems to be a positive correlated with the previous terms.
+
+https://en.wikipedia.org/wiki/Autoregressive_model#Explicit_mean/difference_form_of_AR(1)_process
+
+\newpage
+
 ## Task b 
 
-```{r echo=FALSE}
-# Task 3b
+```{r echo=FALSE, include=FALSE}
+# Task b
 
 set.seed(1234567890)
 
@@ -615,7 +626,7 @@ phi2 <- 0.95
 
 #ar with given parameters
 res1 <- ar_process(t,mu,phi1,sigma2)
-res2 <- ar_process(t,mu,phi1,sigma2)
+res2 <- ar_process(t,mu,phi2,sigma2)
 
 data1 <- list(N=t, x=res1)
 data2 <- list(N=t, x=res2)
@@ -625,13 +636,14 @@ niter <- 2000
 
 fit1 <- stan(model_code=StanModel,data=data1, warmup=warmup,iter=niter, chains = 4)
 fit2 <- stan(model_code=StanModel,data=data2, warmup=warmup,iter=niter, chains = 4)
+
 ```
 
 ## i)
 
 ```{r echo=FALSE}
 fit1_summary <- summary(fit1)
-phi1_stats <- fit1_summary$summary[1:3,c(1,3,4,8,9)]
+phi1_stats <- fit1_summary$summary[1:3,c(1,4,8,9)]
 
 knitr::kable(phi1_stats,caption = "Table for phi=0.2")
 
@@ -639,18 +651,31 @@ knitr::kable(phi1_stats,caption = "Table for phi=0.2")
 
 ```{r echo=FALSE}
 fit2_summary <- summary(fit2)
-phi2_stats <- fit2_summary$summary[1:3,c(1,3,4,8,9)]
+phi2_stats <- fit2_summary$summary[1:3,c(1,4,8,9)]
 
 knitr::kable(phi2_stats,caption = "Table for phi=0.95")
 
 ```
 
+From the above tables, the posterior's means are similar to the actual value for each process, except in one case. However, the number of effective posterior samples for the three inferred parameters differ; the number of effective posterior samples is much greater when $\phi$ equals 0.2 than when $\phi$ is 0.95. This is because the 95% credible intervals are smaller when $\phi$ equals 0.2. However, the 95% credible interval of $\phi$ when $\phi$ is 0.95 has very strict lower and upper bounds, and this might be the reason for a low number of effective posterior samples. Both processes simulated the means of $\phi$ and $\sigma^{2}$ values pretty well. Moreover, $\mu$ is estimated close to its actual value when $\phi$ is 0.2, compared to $\mu$ when $\phi$ equals 0.95, which differs significantly; it was expected because of its "large" 95% credible interval.
+
 ## ii)
-```{r}
+
+```{r echo=FALSE}
 traceplot(fit1, pars = c("mu", "phi", "sigma2"), inc_warmup = TRUE, nrow = 3) 
+
+```
+
+The above traceplots represent the convergence of the samplers when $\phi$ equals 0.2. After approximately 150 iterations all values seems to convergence to the actual ones.
+
+\newpage
+
+```{r echo=FALSE}
 traceplot(fit2, pars = c("mu", "phi", "sigma2"), inc_warmup = TRUE, nrow = 3)
 
 ```
+
+The above traceplots represent the convergence of the samplers when $\phi$ equals 0.95. After approximately 150 iterations all values seems to convergence to the actual ones. An interesting feature is that $\mu$ has extreme values in same cases, which is expected because of its "big" 95% credible interval.
 
 ```{r echo=FALSE}
 draws1 <- extract(fit1)
@@ -663,14 +688,23 @@ ggplot(df_draws1) +
   geom_point(aes(x=mu, y=phi), color = "navy") +
   ggtitle("Joint Posterior of mu and phi") +
   theme_classic()
+
 ```
 
-```{r}
+In the plot of the joint posterior of $\mu$ and $\phi$ when $\phi$ is 0.2, it is evident that most of the observations are gathered around in the region of the actual values of $\mu$ and $\phi$.
+
+```{r echo=FALSE}
 ggplot(df_draws2) +
   geom_point(aes(x=mu, y=phi), color = "navy") +
   ggtitle("Joint Posterior of mu and phi") +
   theme_classic()
+
 ```
+
+In the plot of the joint posterior of $\mu$ and $\phi$ when $\phi$ is 0.95, the observations are plotted close to the actual value of $\phi$. However, the observations are spread because of the extremely low and upper bound of the 95% credible interval of $\mu$.
+
+\newpage
+
 # *Appendix*
 ```{r ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
 ```
