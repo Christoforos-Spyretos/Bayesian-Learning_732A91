@@ -26,15 +26,6 @@ log_records <- log(precipitation$records)
 
 ## Task a)
 
-The normal model with conditionally conjugate prior is:
-
-$$
-\begin{aligned}
-\mu &\sim N(\mu_{0},\tau_{0}^{2}) \\
-\sigma^{2} &\sim Inv - \chi^{2}(\nu_{0},\sigma_{0}^{2})
-\end{aligned}
-$$
-
 The full conditional posteriors are:
 $$
 \begin{aligned}
@@ -110,30 +101,23 @@ for (i in 1:N) {
 
 ```{r echo=FALSE}
 #calculating autocorrelation for mu
-mu_rho <- acf(mu_gibbs,main = "Autocorrelation of mu", col = "red4", lwd = 2)
+mu_r <- acf(mu_gibbs,main = "Autocorrelation of mu", col = "red4", lwd = 2)
 
 #callculating the inefficiency factor of mu
-IF_mu <- 1+2*sum(mu_rho$acf[-1])
+IF_mu <- 1+2*sum(mu_r$acf[-1])
 
 ```
-
-The above graph illustrates the correlation coefficient of $\mu$ against the lag. The red bars illustrate the correlation coefficient of $\mu$ of each lag, and the blue lines represent the statistically significant boundaries. The ACF equals 1 for a lag 0, which is expected because the "first step" is always perfectly correlated with itself (the lag 0 autocorrelation is fixed at one by convention). Furthermore, as lag increases, the correlation gets closer to 0, which means the variables are unrelated between them.
 
 ```{r echo=FALSE}
 #calculating autocorrelation for sigma2
-sigma2_rho <- acf(sigma2_gibbs,main = "Autocorrelation of sigma2", col = "red4", lwd = 2)
+sigma2_r <- acf(sigma2_gibbs,main = "Autocorrelation of sigma2", col = "red4", lwd = 2)
 
 #callculating the inefficiency factor of sigma2
-IF_sigma2 <- 1+2*sum(sigma2_rho$acf[-1])
+IF_sigma2 <- 1+2*sum(sigma2_r$acf[-1])
 
 ```
 
-The above graph illustrates the correlation coefficient of $\sigma^{2}$ against the lag. The red bars illustrate the correlation coefficient of $\sigma^{2}$ of each lag, and the blue lines represent the statistically significant boundaries. The ACF equals 1 for a lag 0, which is expected because the "first step" is always perfectly correlated with itself (the lag zero autocorrelation is fixed at one by convention). Furthermore, as lag increases, the correlation gets closer to 0, which means the variables are unrelated between them. Finally, however, the ACF value crosses the "boundaries", which means that the variables are related when lag equals 12, 16 and 30.
-
-https://www.baeldung.com/cs/acf-pacf-plots-arma-modeling \
-https://en.wikipedia.org/wiki/Autocorrelation
-
-\
+The above graphs illustrate the correlation coefficient of $\mu$ and $\sigma^{2}$ against the lag. The red bars illustrate the correlation coefficient of the parameters of each lag, and the blue lines represent the statistically significant boundaries. In both graphs, the ACF equals 1 for a lag 0, which is reasonable because the "first step" is always perfectly correlated with itself (the lag 0 autocorrelation is fixed at one by convention). More specifically, in the first graph, the correlation coefficient of $\mu$ is inside the boundaries when lag is greater than 3, which means the values are unrelated between them. Likewise, in the second graph, the correlation coefficient of $\sigma^{2}$ gets closer to 0 after lag is 2, which means the values are unrelated between them. Finally, however, the ACF value crosses the "boundaries" in some cases, which means that the variables are related when lag equals 12, 16 and 30.
 
 The below table illustrates the inefficiency factors of $\mu$ and $\sigma^{2}$.
 
@@ -145,28 +129,32 @@ knitr::kable(IFs_df)
 
 ```
 
-The inefficiency factor equals 1 if there is not any autocorrelation. The inefficiency factor of $\mu$ is close to 1, which means this is an efficient sample. However, the inefficiency factor of $\sigma^{2}$ equals approximately 1.63, which means that the sample is efficient enough.
+The inefficiency factor equals 1 if there is not any autocorrelation. The inefficiency factor of $\mu$ is close to 1, which means this is an efficient sample. However, the inefficiency factor of $\sigma^{2}$ equals approximately 1.63, which means that the sample is not efficient enough; this is because the ACF values of $\sigma^{2}$ cross the statistically significant boundaries when lag equals 12, 16 and 30. 
+
+https://www.baeldung.com/cs/acf-pacf-plots-arma-modeling \
+https://en.wikipedia.org/wiki/Autocorrelation 
+\
 
 ```{r echo=FALSE}
 #df for plot
 plot_df_traj <- data.frame("mu"=mu_gibbs, "sigma2"=sigma2_gibbs)
 
-# plotting some amount of points 
-plot_df_traj <- plot_df_traj[1:200,]
+#plotting the first 70 samples
+#plotting all the samples would be a mess
+plot_df_traj <- plot_df_traj[1:70,]
 
 #trajectories of the sampled Markov chains.
 ggplot(plot_df_traj) +
   geom_path(aes(x = mu, y = sigma2), color = "navy") + 
   geom_point(aes(x = mu[1], y = sigma2[1]), color = "red2", size = 2) +
-  geom_point(aes(x = mu[200], y = sigma2[200]), color = "green2", size = 2) +
-  ggtitle("Trajectories of the Sampled Markov chains.") + 
+  geom_point(aes(x = mu[70], y = sigma2[70]), color = "green2", size = 2) +
   ylab("sigma2") + 
   xlab("mu") +
   theme_classic()
 
 ```
 
-The above plot illustrates the trajectories of the first 200 point of the sample, the red dot is the starting point and the green dot is the ending point.
+The above plot illustrates the trajectories of the first 70 point of the sample, the red dot is the starting point and the green dot is the ending point.
 
 ## Task b
 
@@ -201,7 +189,7 @@ ggplot(plot_df_dens) +
   
 ```
 
-The posterior predictive density has almost the same pattern as the density of the actual values; thus it could be assumed that the the posterior's predictive values agree with the data.
+The posterior predictive density has almost the same pattern as the density of the actual values; thus the posterior's predictive values agree very well with the data.
 
 \newpage
 
@@ -215,6 +203,8 @@ ebay <- read.table("eBayNumberOfBidderData.dat",header=TRUE)
 ```
 
 ## Task a
+
+Below the summary of the glm is represented.
 
 ```{r echo=FALSE}
 # Task a
@@ -368,6 +358,7 @@ RWMSampler <- function(N, logPostFunc, init_beta, constant, cov_mat, target_val,
   betas[1,] <- init_sample
   
   for (i in 2:N){
+    
     #sample proposal
     sample_proposal <- as.vector(rmvnorm(1,betas[i-1,], constant*cov_mat))
     
@@ -461,16 +452,19 @@ In the above plots, the blue lines illustrate the convergence of each $\widetild
 
 set.seed(1234567890)
 
+#given auction
 auction <- c(1,1,0,1,0,1,0,1.2,0.8)
 
 nbidders = c()
+
 for(i in 1:nrow(RWMbetas)){
    nbidders[i] <- rpois(1,exp(RWMbetas[i, ] %*% auction))
 }
 
 nbidders <- data.frame(nbidders)
 
-prob <- sum(nbidders$nbidders == 0)/(nrow(nbidders))
+zero_bidders <- which(nbidders$nbidders == 0)
+prob <- length(zero_bidders)/(nrow(nbidders))
 
 ggplot(nbidders, aes(x=nbidders)) +
   geom_histogram(bins = 200, color = "navy", fill = "steelblue2")+
@@ -478,6 +472,7 @@ ggplot(nbidders, aes(x=nbidders)) +
   xlab("Number of Bidders") +
   ylab("Density") +
   theme_classic()
+
 ```
 
 The probability of no bidders in this new auction is approximately 40%.
@@ -599,6 +594,8 @@ https://en.wikipedia.org/wiki/Autoregressive_model#Explicit_mean/difference_form
 ## Task b 
 
 ```{r echo=FALSE, include=FALSE}
+#parts of the below code snippets from a demo of Stanmodel.R provided by the lecturer
+
 # Task b
 
 set.seed(1234567890)
@@ -666,7 +663,7 @@ traceplot(fit1, pars = c("mu", "phi", "sigma2"), inc_warmup = TRUE, nrow = 3)
 
 ```
 
-The above traceplots represent the convergence of the samplers when $\phi$ equals 0.2. After approximately 150 iterations all values seems to convergence to the actual ones.
+The above traceplots represent the convergence of the samplers when $\phi$ equals 0.2. After approximately 150 iterations all values seems to convergence to the actual ones. (The gray area illustrates the warm-up iterations).
 
 \newpage
 
@@ -675,7 +672,7 @@ traceplot(fit2, pars = c("mu", "phi", "sigma2"), inc_warmup = TRUE, nrow = 3)
 
 ```
 
-The above traceplots represent the convergence of the samplers when $\phi$ equals 0.95. After approximately 150 iterations all values seems to convergence to the actual ones. An interesting feature is that $\mu$ has extreme values in same cases, which is expected because of its "big" 95% credible interval.
+The above traceplots represent the convergence of the samplers when $\phi$ equals 0.95. After approximately 150 iterations all values seems to convergence to the actual ones. An interesting feature is that $\mu$ has extreme values in same cases, which is expected because of its "big" 95% credible interval. (The gray area illustrates the warm-up iterations).
 
 ```{r echo=FALSE}
 draws1 <- extract(fit1)
