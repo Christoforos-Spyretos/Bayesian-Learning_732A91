@@ -1,0 +1,125 @@
+---
+title: "August-2021-Exam"
+author: "Christophoros Spyretos"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+```
+
+# Exercise 1
+
+## Task a
+
+Hand written solution.
+
+## Task b
+
+```{r}
+set.seed(12345)
+
+y <- c(2.32,1.82,2.4,2.08,2.13)
+n <- 5
+
+N <- 10000
+
+#generate thetas from the posterior distribution
+theta <- rgamma(N, shape = 2*n + 1, rate = 0.5 + sum(y))
+
+#generate predictive values form the given gamma density
+y_tilde <- rgamma(N, shape = 2, rate = theta)
+
+#calculate the density
+dens_y_tilde <- density(y_tilde)
+
+df_plot1 <- data.frame("x" = dens_y_tilde$x, "y" = dens_y_tilde$y)
+
+ggplot(df_plot1) +
+  geom_line(aes(x=x,y=y), color = "navy") +
+  ggtitle("Predictive Distribution") +
+  xlab("Predictive Values") +
+  ylab("Density") +
+  theme_classic()
+```
+
+```{r}
+prob <- mean(y_tilde < 1.9)
+```
+
+The posterior predictive probability is roughly 0.53.
+
+```{r}
+set.seed(12345)
+
+weeks <- 30
+weights <- matrix(NA, nrow = N, ncol = weeks)
+
+for (i in 1:N){
+  #generate thetas from the posterior distribution
+  theta <- rgamma(weeks, shape = 2*n + 1, rate = 0.5 + sum(y))
+  
+  #generate predictive values form the given gamma density
+  weights[i,]<- t(rgamma(weeks, shape = 2, rate = theta))
+}
+
+overweight_weeks <- mean(rowSums(weights > 2.4))
+```
+
+The expected number of weeks out of the future 30 weeks in which the maximal weight will exceed 2.4 thousands of kilos about 10.5.
+
+```{r}
+#given loss function
+loss_function <- function(a, weights){
+  res <- a + mean(rowSums(weights > 0.9*log(a)))
+  return(res)
+}
+
+a <- runif(1000,1,10)
+loss_results <- rep(NA,length(a),1)
+count <- 0
+
+for (i in a){
+  count <- count + 1
+  loss_results[count] = loss_function(i, weights)
+}
+
+optimal_a <- a[which.min(loss_results)]
+```
+
+The optimal build cost (a) is approximately 7.3 thousands of kilos.
+
+# Exercise 3 
+
+Task a,b and c are hand written.
+
+## Task d
+
+```{r}
+set.seed(1)
+
+logPost <- function(theta,n,sumlogx){
+  
+  logLik <- -n*theta**2 + 2*theta*sumlogx
+  
+  return(logLik)
+}
+
+theta <- runif(100,0,1)
+n <- 5
+sumlogx <- 2
+
+posterior <- exp(logPost(theta,n,sumlogx))
+
+posterior <- posterior/(0.01*sum(posterior))
+
+df_plot2 <- data.frame("x"=posterior)
+
+ggplot(df_plot2, aes(x=x)) +
+  geom_density(colour = "red4", size = 1) +
+  ggtitle("Posterior Distribution of Theta") +
+  xlab("Theta Values") +
+  ylab("Density") +
+  theme_classic()
+```

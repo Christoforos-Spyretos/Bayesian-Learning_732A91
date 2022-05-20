@@ -19,7 +19,7 @@
 load(file = 'UniversityEntrance.RData')
 
 #install.packages("geoR")
-library(geoR)
+#library(geoR)
 
 BayesLinReg <- function(y, X, mu_0, Omega_0, v_0, sigma2_0, nIter){
   # Direct sampling from a Gaussian linear regression with conjugate prior:
