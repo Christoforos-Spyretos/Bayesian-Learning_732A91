@@ -156,6 +156,33 @@ ggplot(plot_df_traj) +
 
 The above plot illustrates the trajectories of the first 70 point of the sample, the red dot is the starting point and the green dot is the ending point.
 
+```{r echo=FALSE}
+#data for converge plots
+df_plot_conv <- data.frame("draws" = 1:1999,
+                       "mean_gibbs" = mu_gibbs,
+                       "sigma2_gibbs" = sigma2_gibbs)
+
+library(ggplot2)
+
+#converge plot of Gibbs's mu
+ggplot(df_plot_conv) +
+  geom_line(aes( x = draws, y = mean_gibbs),color = "navy") +
+  theme(legend.position="right") +
+  ggtitle("Converge Plot of Gibb's Mean Value") +
+  xlab("Number of Draws") +
+  ylab("Mean Values") +
+  theme_classic()
+
+#converge plot of Gibbs's sigma2
+ggplot(df_plot_conv) +
+  geom_line(aes( x = draws, y = sigma2_gibbs),color = "navy") +
+  theme(legend.position="right") +
+  ggtitle("Converge Plot of Gibb's Sigma2 Value") +
+  xlab("Number of Draws") +
+  ylab("Sigma2 Values") +
+  theme_classic()
+```
+
 ## Task b
 
 ```{r echo=FALSE}
@@ -216,7 +243,7 @@ model <- glm(formula = nBids ~. -Const, data = ebay, family = poisson )
 summary(model)
 ```
 
-The most significant covariates are the *VerifyID*, *Sealed*, *LogBook* and *MinBidShare*.
+The significant covariates are the *VerifyID*, *Sealed*, *LogBook* and *MinBidShare*.
 
 \newpage
 
@@ -396,54 +423,54 @@ plot_df_RWM$Iterations <- 1:1000
 
 p1 <-ggplot(plot_df_RWM) +
   geom_line( aes(x=Iterations, y=Constant), color = "navy") + 
-  geom_hline(yintercept = model$coefficients[1], color = "red3") +
+  geom_hline(yintercept = OptimRes$par[1,], color = "red3") +
   theme_classic()
 
 p2 <-ggplot(plot_df_RWM) +
   geom_line(aes(x=Iterations, y=PowerSeller), color = "navy") + 
-  geom_hline(yintercept = model$coefficients[2], color = "red3") +
+  geom_hline(yintercept = OptimRes$par[2,], color = "red3") +
   theme_classic()
 
 p3 <-ggplot(plot_df_RWM) +
   geom_line(aes(x=Iterations, y=VerifyID), color = "navy") + 
-    geom_hline(yintercept = model$coefficients[3], color = "red3") +
+    geom_hline(yintercept = OptimRes$par[3,], color = "red3") +
   theme_classic()
 
 p4 <-ggplot(plot_df_RWM) +
   geom_line(aes(x=Iterations, y=Sealed), color = "navy") + 
-    geom_hline(yintercept = model$coefficients[4], color = "red3") +
+    geom_hline(yintercept = OptimRes$par[4,], color = "red3") +
   theme_classic()
 
 p5 <-ggplot(plot_df_RWM) +
   geom_line(aes(x=Iterations, y=Minblem), color = "navy") + 
-    geom_hline(yintercept = model$coefficients[5], color = "red3") +
+    geom_hline(yintercept = OptimRes$par[5,], color = "red3") +
   theme_classic()
 
 p6 <-ggplot(plot_df_RWM) +
   geom_line(aes(x=Iterations, y=MajBlem), color = "navy") + 
-    geom_hline(yintercept = model$coefficients[6], color = "red3") +
+    geom_hline(yintercept = OptimRes$par[6,], color = "red3") +
   theme_classic()
 
 p7 <-ggplot(plot_df_RWM) +
   geom_line(aes(x=Iterations, y=LargNeg), color = "navy") + 
-    geom_hline(yintercept = model$coefficients[7], color = "red3") +
+    geom_hline(yintercept = OptimRes$par[7,], color = "red3") +
   theme_classic()
 
 p8 <-ggplot(plot_df_RWM) +
   geom_line(aes(x=Iterations, y=LogBook), color = "navy") + 
-    geom_hline(yintercept = model$coefficients[8], color = "red3") +
+    geom_hline(yintercept = OptimRes$par[8,], color = "red3") +
   theme_classic()
 
 p9 <-ggplot(plot_df_RWM) +
   geom_line(aes(x=Iterations, y=MinBidShare), color = "navy") + 
-    geom_hline(yintercept = model$coefficients[9], color = "red3") +
+    geom_hline(yintercept = OptimRes$par[9,], color = "red3") +
   theme_classic()
 
 grid.arrange(p1,p2,p3,p4,p5,p6,p7,p8,p9, nrow = 3)
 
 ```
 
-In the above plots, the blue lines illustrate the convergence of each $\widetilde{\beta}$ sampled by the Random Walk Metropolis algorithm, and the red lines represent the actual posterior mode. More specifically, it could be assumed that the mode of all $\widetilde{\beta}$ converges to the actual mode, although it is not great in some cases.
+In the above plots, the blue lines illustrate the convergence of each $\widetilde{\beta}$ sampled by the Random Walk Metropolis algorithm, and the red lines represent the true posterior mode. More specifically, it could be assumed that the mode of all $\widetilde{\beta}$ converges to the true mode, although it is not great in some cases.
 
 ## Task d
 
@@ -654,7 +681,7 @@ knitr::kable(phi2_stats,caption = "Table for phi=0.95")
 
 ```
 
-From the above tables, the posterior's means are similar to the actual value for each process, except in one case. However, the number of effective posterior samples for the three inferred parameters differ; the number of effective posterior samples is much greater when $\phi$ equals 0.2 than when $\phi$ is 0.95. This is because the 95% credible intervals are smaller when $\phi$ equals 0.2. However, the 95% credible interval of $\phi$ when $\phi$ is 0.95 has very strict lower and upper bounds, and this might be the reason for a low number of effective posterior samples. Both processes simulated the means of $\phi$ and $\sigma^{2}$ values pretty well. Moreover, $\mu$ is estimated close to its actual value when $\phi$ is 0.2, compared to $\mu$ when $\phi$ equals 0.95, which differs significantly; it was expected because of its "large" 95% credible interval.
+From the above tables, the posterior's means are similar to the actual value for each process, except in one case. However, the number of effective posterior samples for the three inferred parameters differ; the number of effective posterior samples is much greater when $\phi$ equals 0.2 than when $\phi$ is 0.95. This is because the 95% credible intervals are smaller when $\phi$ equals 0.2. However, the 95% credible interval of $\phi$ when $\phi$ is 0.95 have greater lower and upper bounds, and this might be the reason for a low number of effective posterior samples. Both processes simulated the means of $\phi$ and $\sigma^{2}$ values pretty well. Moreover, $\mu$ is estimated close to its actual value when $\phi$ is 0.2, compared to $\mu$ when $\phi$ equals 0.95, which differs significantly; it was expected because of its "large" 95% credible interval.
 
 ## ii)
 

@@ -342,10 +342,10 @@ radians = c(-2.44, 2.14, 2.54, 1.83, 2.02, 2.33, -2.79, 2.23, 2.07, 2.02)
 k <- seq(0,10,0.25)
 
 #unormalised posterior
-posterior <- exp(k*sum(cos(radians-2.51))-1)/(besselI(x = k, nu=0)^9)
+posterior <- exp(k*(sum(cos(radians-2.51))-1))/(besselI(x = k, nu=0)^10)
 
 #normalising constant/marginal likelihood
-norm_constant <- sum(posterior)
+norm_constant <- 0.25*sum(posterior)
 
 #normalised posterior
 norm_posterior <- posterior/norm_constant

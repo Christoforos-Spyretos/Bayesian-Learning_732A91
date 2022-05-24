@@ -313,7 +313,7 @@ ggplot(data = plot_df_1b2) +
 
 ```
 
-It is evident that 95% equal tail posterior probability intervals do not contain most data points. It should not contain most data points because the interval illustrates uncertainty around the median value.
+It is evident that 95% equal tail posterior probability intervals do not contain most data points. It should not contain most data points because the interval illustrates the uncertainty around the median value.
 
 ## Task 1c 
 
@@ -326,20 +326,33 @@ Calculate the derivative, $f'(x) = \beta_{1} + 2 \cdot \beta_{2} \cdot x$
 Find the maximal:
 $f'(x) = 0 \Leftrightarrow \beta_{1} + 2 \cdot \beta_{2} \cdot x = 0 \Leftrightarrow x = \frac{-\beta_{1}}{2 \cdot \beta_{2}}$
 
-```{r}
+```{r echo=FALSE}
 #Task 1c
 
 #getting the time with the highest expected temperature by using the above expression
-max_temp <- max(-b[,2]/(2*b[,3]))
-max_temp
+max_temp <- c()
 
+for (i in 1:N){
+  max_temp[i] <- max(-b[i,2]/(2*b[i,3]))
+}
+
+df_max <- data.frame("max_temp" = max_temp)
+
+#histogram of max temps
+ggplot(df_max, aes(x=max_temp)) +
+  geom_histogram(bins = 19, color = "navy", fill = "steelblue2", aes(y=..density..)) +
+  geom_density(colour = "red4", size = 1) +
+  ggtitle("Histogram of Max Temperatures") +
+  xlab("Max Temperatures Values") +
+  ylab("Density") +
+  theme_classic()
 ```
 
 The time with the highest expected temperature is approximately 0.56.
 
 ## Task 1d
 
-Estimating a polynomial regression of order 8 with the suspicion that higher-order terms may not be needed because it might lead to overfitting the data. The main problem that could lead to overfitting is the number of knots. A solution to this problem is to introduce a regularised prior, $\beta_{j}|\sigma^2 \sim N(\mu_{0},\frac{\sigma^2}{\lambda})$, where $Omega_0 = \lambda \cdot I$.
+Estimating a polynomial regression of order 8 with the suspicion that higher-order terms may not be needed because it might lead to overfitting the data. The main problem that could lead to overfitting is the number of knots. A solution to this problem is to introduce a regularised prior, $\beta_{i}|\sigma^2 \sim N(\mu_{0},\frac{\sigma^2}{\lambda})$, where $Omega_{0} = \lambda \cdot I_{3}$. Where the parameter $\lambda$ will control the variance of $\beta_i$. If $\lambda$ is larger, $\beta_{i}$ would be much closer to $\mu_{0}$.
 
 # Assignment 2 *Posterior approximation for classification with logistic regression*
 
@@ -515,7 +528,7 @@ prediction2 <- function(N,data,posterior_mode,posterior_covariates, nwomen){
   
   for (i in 1:nwomen){
     #binomial distribution 
-    res[i] <- sum(rbinom(n = 7,size = 1,prob = pred))
+    res[i] <- sum(rbinom(n = 7,size = 11,prob = pred))
   }
   
   return(res)
