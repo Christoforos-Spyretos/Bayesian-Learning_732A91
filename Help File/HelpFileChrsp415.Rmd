@@ -885,3 +885,701 @@ pred2 <- prediction2(1000, women2, OptimRes$par, -solve(OptimRes$hessian), 11)
 
 hist(pred2, col = "steelblue2", main = "Posterior Predictive Distribution For The Number Of Women", xlab = "Number Of Women", ylab = "Density",probability = TRUE)
 ```
+
+\newpage
+
+# Lab 3
+
+## Assignment 1 *Gibbs sampler for a normal model*
+
+The dataset Precipitation.rds consists of daily records of weather with rain or snow (in units of mm) from the beginning of 1962 to the end of 2008 in a certain area. Assume the natural log of the daily precipitation ${y1,...,yn}$ to be independent normally distributed, $lny_{n}|\mu, \sigma^2 \overset{\text{iid}}{\sim} N (\mu, \sigma^2 )$, where both $\mu$ and $\sigma^2$ are unknown. Let $\mu \sim N(\mu_{0}, \tau_{0})$ independently of $sigma^2 \sim Inv-\chi^2(\nu_{0}, \sigma_{0}^2)$.
+
+```{r}
+#Reading & preparing data 
+precipitation <- as.data.frame(readRDS("Precipitation.rds"))
+colnames(precipitation) <- "records"
+log_records <- log(precipitation$records)
+```
+
+### Task a
+
+**Question**: Implement (code!) a Gibbs sampler that simulates from the joint posterior $p(\mu,\sigma^2|lny_{1},...,lny_{n})$. The full conditional posteriors are given on the slides from Lecture 7. Evaluate the convergence of the Gibbs sampler by calculating the Inefficiency Factors (IFs) and by plotting the trajectories of the sampled Markov chains.
+
+The full conditional posteriors are:
+$$
+\begin{aligned}
+\mu|\sigma^{2},x &\sim N(\mu_{n},\tau_{n}^{2}) \\
+\sigma^{2}|\mu,x &\sim Inv-\chi^{2}\Big(\nu_{n},\frac{\nu_{0} \sigma_{0}^{2} + \sum_{i=1}^{n}(x_{i}-\mu)^{2}}{n + \nu_{0}}   \Big)
+\end{aligned}
+$$
+
+Where: 
+
+$$
+\begin{aligned}
+w & = \frac{\frac{n}{\sigma^{2}}}{\frac{n}{\sigma^{2}} + \frac{1}{\tau_{0}^{2}}} \\
+\mu_{n} &= w \overline{x} + (1-w)\mu_{0} \\
+\tau_{n}^{2} &= \frac{1}{\frac{n}{\sigma^{2}} + \frac{1}{\tau_{0}^{2}}} \\
+\nu_{n} &= \nu_{0} + n
+\end{aligned}
+$$
+
+```{r}
+set.seed(1234567890)
+
+# setting up prior parameters
+n <- length(log_records)
+n_0 <- 1 
+mu_0 <- mean(log_records)
+sigma2_0 <- var(log_records) 
+tau2_0 <- 1
+
+# normal model with conditionally conjugate prior
+# mu_prop <- rnorm(n = 1, mean = mu_0, sqrt(tau2_0)) 
+# sigma2_prop <-  n_0*sigma2_0 / rchisq(1,n_0)
+
+#sigma2 starting value
+sigma2 <- sigma2_0
+
+#vectors to store the samples 
+mu_gibbs <- c()
+sigma2_gibbs <- c(sigma2)
+
+N <- 1000
+for (i in 1:N) {
+  
+  #calculating parameters 
+  w <- (n/sigma2)/((n/sigma2) + (1/tau2_0))
+  mu_n <- w * mean(log_records) + (1 - w) * mu_0
+  tau2_n <- 1 / (n/sigma2 + 1/tau2_0)
+  
+  #calculating mu
+  mu <- rnorm(n = 1, mean = mu_n, sd = tau2_n)
+  
+  #temporaly store the previous sigma2
+  previous_sigma2 <- sigma2
+   
+  #calculating parameter
+  n_n <- n_0 + n
+
+  #calculating sigma2
+  sigma2 <- (n_n*((n_0*sigma2_0+sum((log_records-mu)^2))/ n_n))/rchisq(1,n_n)
+  
+  #conditions of how to store the samples
+  if(i==1){
+    mu_gibbs <- c(mu)
+    sigma2_gibbs <- c(sigma2)
+  }else{
+    mu_gibbs <- append(mu_gibbs,c(mu,mu))
+    sigma2_gibbs <- append(sigma2_gibbs,c(previous_sigma2,sigma2))
+  }
+}
+```
+
+```{r}
+#calculating autocorrelation for mu
+mu_r <- acf(mu_gibbs,main = "Autocorrelation of mu", col = "red4", lwd = 2)
+
+#callculating the inefficiency factor of mu
+IF_mu <- 1+2*sum(mu_r$acf[-1])
+```
+
+```{r}
+#calculating autocorrelation for sigma2
+sigma2_r <- acf(sigma2_gibbs,main = "Autocorrelation of sigma2", col = "red4", lwd = 2)
+
+#callculating the inefficiency factor of sigma2
+IF_sigma2 <- 1+2*sum(sigma2_r$acf[-1])
+```
+
+The above graphs illustrate the correlation coefficient of $\mu$ and $\sigma^{2}$ against the lag. The red bars illustrate the correlation coefficient of the parameters of each lag, and the blue lines represent the statistically significant boundaries. In both graphs, the ACF equals 1 for a lag 0, which is reasonable because the "first step" is always perfectly correlated with itself (the lag 0 autocorrelation is fixed at one by convention). More specifically, in the first graph, the correlation coefficient of $\mu$ is inside the boundaries when lag is greater than 3, which means the values are unrelated between them. Likewise, in the second graph, the correlation coefficient of $\sigma^{2}$ gets closer to 0 after lag is 2, which means the values are unrelated between them. Finally, however, the ACF value crosses the "boundaries" in some cases, which means that the variables are related when lag equals 12, 16 and 30.
+
+The below table illustrates the inefficiency factors of $\mu$ and $\sigma^{2}$.
+
+```{r}
+#df with the inefficiency factors of mu & sigma
+IFs_df <- data.frame("mu"=IF_mu, "sigma2"=IF_sigma2)
+rownames(IFs_df)<-c("Inefficiency Factors")
+knitr::kable(IFs_df)
+```
+
+The inefficiency factor equals 1 if there is not any autocorrelation. The inefficiency factor of $\mu$ is close to 1, which means this is an efficient sample. However, the inefficiency factor of $\sigma^{2}$ equals approximately 1.63, which means that the sample is not efficient enough; this is because the ACF values of $\sigma^{2}$ cross the statistically significant boundaries when lag equals 12, 16 and 30. 
+
+```{r}
+#df for plot
+plot_df_traj <- data.frame("mu"=mu_gibbs, "sigma2"=sigma2_gibbs)
+
+#plotting the first 70 samples
+#plotting all the samples would be a mess
+plot_df_traj <- plot_df_traj[1:70,]
+
+#trajectories of the sampled Markov chains.
+ggplot(plot_df_traj) +
+  geom_path(aes(x = mu, y = sigma2), color = "navy") + 
+  geom_point(aes(x = mu[1], y = sigma2[1]), color = "red2", size = 2) +
+  geom_point(aes(x = mu[70], y = sigma2[70]), color = "green2", size = 2) +
+  ylab("sigma2") + 
+  xlab("mu") +
+  theme_classic()
+```
+
+The above plot illustrates the trajectories of the first 70 point of the sample, the red dot is the starting point and the green dot is the ending point.
+
+```{r}
+#data for converge plots
+df_plot_conv <- data.frame("draws" = 1:1999,
+                       "mean_gibbs" = mu_gibbs,
+                       "sigma2_gibbs" = sigma2_gibbs)
+
+#converge plot of Gibbs's mu
+ggplot(df_plot_conv) +
+  geom_line(aes( x = draws, y = mean_gibbs),color = "navy") +
+  theme(legend.position="right") +
+  ggtitle("Converge Plot of Gibb's Mean Value") +
+  xlab("Number of Draws") +
+  ylab("Mean Values") +
+  theme_classic()
+
+#converge plot of Gibbs's sigma2
+ggplot(df_plot_conv) +
+  geom_line(aes( x = draws, y = sigma2_gibbs),color = "navy") +
+  theme(legend.position="right") +
+  ggtitle("Converge Plot of Gibb's Sigma2 Value") +
+  xlab("Number of Draws") +
+  ylab("Sigma2 Values") +
+  theme_classic()
+```
+
+### Task b
+
+**Question**:Plot the following in one figure: 1) a histogram or kernel density estimate of the daily precipitation ${y1, ..., yn}$. 2) The resulting posterior predictive density $p(\tilde{y}|y_1,...,y_n)$ using the simulated posterior draws from (a). How well does the posterior predictive density agree with this data?
+
+```{r}
+set.seed(1234567890)
+
+#predicted draws
+predictions <- rnorm(nrow(precipitation),mu_gibbs,sqrt(sigma2_gibbs))
+
+#kernel density estimation
+density_actual <- density(precipitation$records)
+density_pred <- density(exp(predictions))
+
+#df for plot
+plot_df_dens <- data.frame( "actual_x" = density_actual$x,
+                            "actual_y" = density_actual$y,
+                            "pred_x" = density_pred$x,
+                            "pred_y" = density_pred$y)
+
+ggplot(plot_df_dens) + 
+  geom_line(aes(x=actual_x, y=actual_y, color = "navy")) +
+  geom_line(aes(x=pred_x, y=pred_y, color = "red2")) +
+  theme(legend.position="right") +
+  scale_color_manual(values=c('navy','red2'),
+                     name = "",
+                     labels = c("Actual Values","Predicted Values")) +
+  xlab("Value") +
+  ylab("Density") +
+  theme_classic()
+```
+
+The posterior predictive density has almost the same pattern as the density of the actual values; thus the posterior's predictive values agree very well with the data.
+
+## Assignment 2 *Metropolis Random Walk for Poisson regression*
+
+Consider the following Poisson regression model
+$$  y_i\mid \beta \overset{\text{iid}}{\sim} \ Poisson \ \big[ \ exp (\mathbf{x}^T_i \beta) \big], \ i = 1,...,n, $$
+
+where $y_i$ is the count for the ith observation in the sample and xi is the p-dimensional vector with covariate observations for the ith observation. Use the data set eBayNumberOfBidderData.dat. This dataset contains observations from 1000 eBay auctions of coins. The response variable is nBids and records the number of bids in each auction. The remaining variables are features/covariates (x):\
+Const (for the intercept)
+PowerSeller (equal to 1 if the seller is selling large volumes on eBay)\
+VerifyID (equal to 1 if the seller is a verified seller by eBay)\
+Sealed (equal to 1 if the coin was sold in an unopened envelope)\
+MinBlem (equal to 1 if the coin has a minor defect)\
+MajBlem (equal to 1 if the coin has a major defect)\
+LargNeg (equal to 1 if the seller received a lot of negative feedback from customers)\
+LogBook (logarithm of the book value of the auctioned coin according to expert sellers. Standardized).\
+MinBidShare (ratio of the minimum selling price (starting price) to the book value. Standardized).\
+
+```{r}
+#Reading data 
+ebay <- read.table("eBayNumberOfBidderData.dat",header=TRUE)
+```
+
+### Task a
+
+**Question**:Obtain the maximum likelihood estimator of $\beta$ in the Poisson regression model for the eBay data [Hint: glm.R, don't forget that glm() adds its own intercept so don't input the covariate Const]. Which covariates are significant?
+
+Below the summary of the glm is represented.
+
+```{r}
+#glm function, + 0 in order to do not input the covariate Const
+model <- glm(formula = nBids ~. -Const, data = ebay, family = poisson )
+
+#print the summary of the model 
+summary(model)
+```
+
+### Task b
+
+**Question**:Let's do a Bayesian analysis of the Poisson regression. Let the prior be $\beta \sim N[0, 100 · (X^{T} \cdot X)^{-1}]$, where X is the n × p covariate matrix. This is a commonly used prior, which is called Zellner's g-prior. Assume first that the posterior density is approximately multivariate normal:
+$$\beta|y \sim N(\tilde{\beta},J_{y}^{-1}(\tilde{\beta})$$,
+where $\tilde{\beta}$ is the posterior mode and $J_{y}(\tilde{\beta})$ is the negative Hessian at the posterior mode. $\tilde{\beta}$ and $J_{y}(\tilde{\beta})$ can be obtained by numerical optimization (optim.R) exactly like you already did for the logistic regression in Lab 2 (but with the log posterior function replaced by the corresponding one for the Poisson model, which you have to code up.).
+
+The likelihood function of the Poisson regression model is:
+
+$$
+L(\beta|X,Y)= \prod_{i}^{n} \frac{e^{Y_{i}\beta^{T}X_{i}}e^{-\beta^{T}X_{i}}}{Y_{i}!}
+$$
+
+The log-likelihood of the Poisson regression model is:
+
+$$
+l(\beta|X,Y) = log\Big(L(\beta|X,Y)\Big) = \sum_{i}^{n} \Big(Y_{i}\beta^{T}X_{i} - e^{\beta^{T}X{i}} - log(Y_{i}) \Big)
+$$
+
+In the above formula, $\theta$ appears in the first two terms; therefore, given that we are only interested in the finding of the best value of $\theta$, we drop the $log(Y_{i})$.  
+
+The final log-likelihood of the Poisson regression model is:
+
+$$
+l(\beta|X,Y) = \sum_{i}^{n} \Big(Y_{i}\beta^{T}X_{i} - e^{\beta^{T}X{i}} \Big)
+$$
+
+```{r}
+#the below code snippets from a demo of logistic regression in Lecture 6
+
+#target value
+y <- ebay$nBids
+
+#prior inputs
+# Select which covariates/features to include
+X <- as.matrix(ebay[2:10])
+Xnames <- colnames(X)
+
+Npar <- dim(X)[2]
+
+# Setting up the prior
+mu <- as.matrix(rep(0,Npar)) # Prior mean vector
+Sigma <- 100 * solve(t(X)%*%X) # Prior covariance matrix
+
+# Functions that returns the log posterior for the poisson and probit regression.
+# First input argument of this function must be the parameters we optimize on,
+# i.e. the regression coefficients beta.
+
+LogPostPoisson <- function(betas,y,X,mu,Sigma){
+  linPred <- X%*%betas
+  #loglikelihood of Poisson regression
+  logLik <- sum(linPred*y - exp(linPred))
+  if (abs(logLik) == Inf) logLik = -20000 # Likelihood is not finite, stear the optimizer away from here!
+  logPrior <- dmvnorm(betas, mu, Sigma, log=TRUE)
+
+  return(logLik + logPrior)
+}
+
+# Select the initial values for beta
+initVal <- matrix(0,Npar,1)
+
+# The argument control is a list of options to the optimizer optim, where fnscale=-1 means that we minimize
+# the negative log posterior. Hence, we maximize the log posterior.
+OptimRes <- optim(initVal,LogPostPoisson,gr=NULL,y,X,mu,Sigma,method=c("BFGS"),control=list(fnscale=-1),hessian=TRUE)
+```
+
+```{r message=FALSE}
+names(OptimRes$par) <- Xnames # Naming the coefficient by covariates
+approxPostStd <- sqrt(diag(-solve(OptimRes$hessian))) # Computing approximate standard deviations.
+names(approxPostStd) <- Xnames # Naming the coefficient by covariates
+#print('The posterior mode is:')
+#print(OptimRes$par)
+#print('The approximate posterior standard deviation is:')
+approxPostStd <- sqrt(diag(-solve(OptimRes$hessian)))
+#print(approxPostStd)
+```
+
+The below table illustrates the $J_{y}^{-1}(\widetilde{\beta})$.
+
+```{r}
+invHessian <- round(-solve(OptimRes$hessian), 5)
+invHessian <- data.frame("invhes" = invHessian)
+colnames(invHessian) <- c("Constant","PowerSeller","VerifyID","Sealed","MinBlem","MajBlem","LargNeg","LogBook","MinBidShare")
+knitr::kable(invHessian)
+```
+
+The below table illustrates the posterior mode values of the features of the dataset, which are almost similar to the actual mode of the true posterior (see the summary of the glm model).
+
+```{r}
+df_post_mode <- data.frame("post_mode" = OptimRes$par)
+colnames(df_post_mode) <- c("Value")
+rownames(df_post_mode) <- c("Constant","PowerSeller","VerifyID","Sealed","MinBlem","MajBlem","LargNeg","LogBook","MinBidShare")
+knitr::kable(df_post_mode)
+```
+
+The below table illustrates the approximate posterior standard deviation values of every feature of the dataset.
+
+```{r}
+df_approxPostStd <- data.frame("approxPostStd" =sqrt(diag(-solve(OptimRes$hessian))))
+colnames(df_approxPostStd) <- c("Value")
+rownames(df_approxPostStd) <-c("Constant","PowerSeller","VerifyID","Sealed","MinBlem","MajBlem","LargNeg","LogBook","MinBidShare")
+knitr::kable(df_approxPostStd)
+```
+
+### Task c
+
+**Questio**: Let's simulate from the actual posterior of $\beta$ using the Metropolis algorithm and compare the results with the approximate results in b). Program a general function that uses the Metropolis algorithm to generate random draws from an arbitrary posterior density. In order to show that it is a general function for any model, we denote the vector of model parameters by $\theta$. Let the proposal density be the multivariate normal density mentioned in Lecture 8 (random walk Metropolis):
+$$\theta_{p}|theta_{(i-1)} \sim N(\theta_{(i-1)},c \cdot \Sigma$$ ,
+where $\Sigma = J_{y}^{-1}(\tilde{\beta})$ was obtained in b). The value c is a tuning parameter and should be an input to your Metropolis function. The user of your Metropolis function should be able to supply her own posterior density function, not necessarily for the Poisson regression, and still be able to use your Metropolis function. This is not so straightforward, unless you have come across function objects in R. The note HowToCodeRWM.pdf in Lisam describes how you can do this in R.
+Now, use your new Metropolis function to sample from the posterior of $\beta$ in the Poisson regression for the eBay dataset. Assess MCMC convergence by graphical methods.
+
+For the Random walk Metropolis algorithm:
+
+1) Initialize $\beta^{0}$ and iterate for i = 1, 2, ... \
+
+2) Sample proposal: $\beta_{p}|\beta^{(i-1)} \sim N(\beta^{(i-1)}, c \cdot \Sigma)$, where $\Sigma=J_{\hat{\beta},y}^{-1}$ \
+
+3) Compute the acceptance probability: $\alpha = min \Big(1,\frac{p(\beta{p}|y)}{p(\beta^{(i-1)}|y)} \Big)$ , where:
+
+$$\frac{p(\beta_{p}|y)}{p(\beta^{(i-1)}|y)} = exp\Big[log(p(\beta_{p}|y)) - log(p(\beta^{(i-1)}|y))$$
+
+4) With probability $\alpha$ set $\beta^{(i)}=\beta_{p}$ and $\beta^{(i)}=\beta^{(i-1)}$
+
+```{r}
+set.seed(1234567890)
+
+RWMSampler <- function(N, logPostFunc, init_beta, constant, cov_mat, target_val, features, mu){
+  
+  init_sample = rmvnorm(1, init_beta, cov_mat)
+  
+  #matrix to store the betas 
+  betas <- matrix(nrow = N,ncol = length(init_sample))
+  
+  betas[1,] <- init_sample
+  
+  for (i in 2:N){
+    
+    #sample proposal
+    sample_proposal <- as.vector(rmvnorm(1,betas[i-1,], constant*cov_mat))
+    
+    #LogPostPoisson <- function(betas,y,X,mu,Sigma)
+    #calculating the new posterior
+    post_new <- logPostFunc(sample_proposal, target_val, features, mu, cov_mat)
+    
+    #calculating the old posterior
+    post_old <- logPostFunc(betas[i-1,], target_val, features, mu, cov_mat)
+    
+    #acceptance probability
+    a <- min(1,exp(post_new - post_old))
+    
+    u <- runif(1,0,1)
+    
+    if (u < a){
+      betas[i,] <- sample_proposal
+    } else{
+      betas[i,] <- betas[i-1,]
+    }
+  }
+  return(betas)
+}
+
+
+RWMbetas <- RWMSampler(1000,LogPostPoisson, runif(9,0,1), 0.35, -solve(OptimRes$hessian), ebay$nBids, as.matrix(ebay[2:10]), OptimRes$par)
+```
+
+```{r}
+plot_df_RWM <- data.frame(RWMbetas)
+colnames(plot_df_RWM) <- c("Constant", "PowerSeller","VerifyID","Sealed","Minblem","MajBlem","LargNeg","LogBook","MinBidShare")
+
+plot_df_RWM$Iterations <- 1:1000
+
+p1 <-ggplot(plot_df_RWM) +
+  geom_line( aes(x=Iterations, y=Constant), color = "navy") + 
+  geom_hline(yintercept = OptimRes$par[1,], color = "red3") +
+  theme_classic()
+
+p2 <-ggplot(plot_df_RWM) +
+  geom_line(aes(x=Iterations, y=PowerSeller), color = "navy") + 
+  geom_hline(yintercept = OptimRes$par[2,], color = "red3") +
+  theme_classic()
+
+p3 <-ggplot(plot_df_RWM) +
+  geom_line(aes(x=Iterations, y=VerifyID), color = "navy") + 
+    geom_hline(yintercept = OptimRes$par[3,], color = "red3") +
+  theme_classic()
+
+p4 <-ggplot(plot_df_RWM) +
+  geom_line(aes(x=Iterations, y=Sealed), color = "navy") + 
+    geom_hline(yintercept = OptimRes$par[4,], color = "red3") +
+  theme_classic()
+
+p5 <-ggplot(plot_df_RWM) +
+  geom_line(aes(x=Iterations, y=Minblem), color = "navy") + 
+    geom_hline(yintercept = OptimRes$par[5,], color = "red3") +
+  theme_classic()
+
+p6 <-ggplot(plot_df_RWM) +
+  geom_line(aes(x=Iterations, y=MajBlem), color = "navy") + 
+    geom_hline(yintercept = OptimRes$par[6,], color = "red3") +
+  theme_classic()
+
+p7 <-ggplot(plot_df_RWM) +
+  geom_line(aes(x=Iterations, y=LargNeg), color = "navy") + 
+    geom_hline(yintercept = OptimRes$par[7,], color = "red3") +
+  theme_classic()
+
+p8 <-ggplot(plot_df_RWM) +
+  geom_line(aes(x=Iterations, y=LogBook), color = "navy") + 
+    geom_hline(yintercept = OptimRes$par[8,], color = "red3") +
+  theme_classic()
+
+p9 <-ggplot(plot_df_RWM) +
+  geom_line(aes(x=Iterations, y=MinBidShare), color = "navy") + 
+    geom_hline(yintercept = OptimRes$par[9,], color = "red3") +
+  theme_classic()
+
+grid.arrange(p1,p2,p3,p4,p5,p6,p7,p8,p9, nrow = 3)
+```
+
+In the above plots, the blue lines illustrate the convergence of each $\tilde{\beta}$ sampled by the Random Walk Metropolis algorithm, and the red lines represent the true posterior mode. More specifically, it could be assumed that the mode of all $\tilde{\beta}$ converges to the true mode, although it is not great in some cases.
+
+### Task d
+
+**Question**: Use the MCMC draws from c) to simulate from the predictive distribution of the number of bidders in a new auction with the characteristics below. Plot the predictive distribution. What is the probability of no bidders in this new auction?\
+PowerSeller = 1\
+VerifyID = 0\
+Sealed = 1\
+MinBlem = 0\
+MajBlem = 1\
+LargNeg = 0\
+LogBook = 1.2\
+MinBidShare = 0.8\
+
+```{r}
+set.seed(1234567890)
+
+#given auction
+auction <- c(1,1,0,1,0,1,0,1.2,0.8)
+
+nbidders = c()
+
+for(i in 1:nrow(RWMbetas)){
+   nbidders[i] <- rpois(1,exp(RWMbetas[i, ] %*% auction))
+}
+
+nbidders <- data.frame(nbidders)
+
+#calculating the probability of no bidders
+zero_bidders <- which(nbidders$nbidders == 0)
+prob <- length(zero_bidders)/(nrow(nbidders))
+
+ggplot(nbidders, aes(x=nbidders)) +
+  geom_histogram(bins = 200, color = "navy", fill = "steelblue2")+
+  ggtitle("Predictive Distribution") +
+  xlab("Number of Bidders") +
+  ylab("Density") +
+  theme_classic()
+```
+
+The probability of no bidders in this new auction is approximately 40%.
+
+## Assignment 3 *Time series models in Stan*
+
+## Task a
+
+**Question**:Write a function in R that simulates data from the AR(1)-process:
+$$x_t = \mu +\phi(x_{t-1}-\mu)+\epsilon_{t}, \epsilon_{t}\overset{\text{iid}}{\sim}N(0,\sigma^{2})$$
+for given values of $\mu$, $\phi$ and $\sigma^2$. Start the process at $x_1 = \mu$ and then simulate values for $x_t$ for t = 2, 3 . . . , T and return the vector $x_{1:T}$ containing all time points. Use $\mu = 13$, $\sigma^2 = 3$ and T = 300 and look at some different realizations (simulations) of $x_{1:T}$ for values of $\phi$ between -1 and 1 (this is the interval of $\phi$ where the AR(1)-process is stationary). Include a plot of at least one realization in the report. What effect does the value of $\phi$ have on $x_{1:T}$?
+
+```{r}
+set.seed(12345)
+
+#AR(1)-process
+ar_process <- function(t,mu,phi,sigma2){
+  x <- c()
+  x[1] <- mu
+  for (i in 2:t){
+    x[i] <- mu + phi*(x[i-1]-mu) + rnorm(1,0,sqrt(sigma2))
+  }
+  return(x)
+}
+
+#given parameters
+mu <- 13
+sigma2 <- 3
+t <- 300
+phi <- seq(-1,1,0.25)
+
+res <- as.data.frame(sapply(phi, function(phi) ar_process(t,mu,phi,sigma2)))
+
+res$iterations <- 1:t
+```
+
+```{r}
+#Time series plots of different phis
+p1 <-ggplot(res) +
+  geom_line(aes(x=iterations, y=V1), color = "navy") + 
+  ggtitle("phi=-1") +
+  xlab("Iterations") +
+  ylab("x") +
+  theme_classic()
+
+p2 <-ggplot(res) +
+  geom_line(aes(x=iterations, y=V2), color = "navy") + 
+  ggtitle("phi=-0.75") +
+  xlab("Iterations") +
+  ylab("x") +
+  theme_classic()
+
+p3 <-ggplot(res) +
+  geom_line(aes(x=iterations, y=V3), color = "navy") + 
+  ggtitle("phi=-0.5") +
+  xlab("Iterations") +
+  ylab("x") +
+  theme_classic()
+
+p4 <-ggplot(res) +
+  geom_line(aes(x=iterations, y=V4), color = "navy") + 
+  ggtitle("phi=-0.25") +
+  xlab("Iterations") +
+  ylab("x") +
+  theme_classic()
+
+p5 <-ggplot(res) +
+  geom_line(aes(x=iterations, y=V5), color = "navy") + 
+  ggtitle("phi=0") +
+  xlab("Iterations") +
+  ylab("x") +
+  theme_classic()
+
+p6 <-ggplot(res) +
+  geom_line(aes(x=iterations, y=V6), color = "navy") + 
+  ggtitle("phi=0.25") +
+  xlab("Iterations") +
+  ylab("x") +
+  theme_classic()
+
+p7 <-ggplot(res) +
+  geom_line(aes(x=iterations, y=V7), color = "navy") + 
+  ggtitle("phi=0.5") +
+  xlab("Iterations") +
+  ylab("x") +
+  theme_classic()
+
+p8 <-ggplot(res) +
+  geom_line(aes(x=iterations, y=V8), color = "navy") + 
+  ggtitle("phi=0.75") +
+  xlab("Iterations") +
+  ylab("x") +
+  theme_classic()
+
+p9 <-ggplot(res) +
+  geom_line(aes(x=iterations, y=V9), color = "navy") + 
+  ggtitle("phi=1") +
+  xlab("Iterations") +
+  ylab("x") +
+  theme_classic()
+
+grid.arrange(p1,p2,p3,p4,p5,p6,p7,p8,p9, nrow=3)
+```
+
+The autoregressive model specifies that the output variable depends linearly on its own previous values and on a stochastic term. In the above plots, when $\phi$ has a negative value and is close to 0, then the process still looks like white noise, but as $\phi$ approaches 1, there seems to be a positive correlated with the previous terms.
+
+### Task b
+
+**Question**: Use your function from a) to simulate two AR(1)-processes, $x_{1:T}$ with $\phi = 0.2$ and $y_{1:T}$ with $\phi = 0.95$. Now, treat your simulated vectors as synthetic data, and treat the values of $\mu$, $\phi$ and $\sigma^2$ as unknown parameters. Implement Stan code that samples from the posterior of the three parameters, using suitable non-informative priors of your choice. [Hint: Look at the time-series models examples in the Stan user's guide/reference manual, and note the different parameterization used here.]\
+i) Report the posterior mean, 95% credible intervals and the number of effective posterior samples for the three inferred parameters for each of the simulated AR(1)-process. Are you able to estimate the true values?\
+ii) For each of the two data sets, evaluate the convergence of the samplers and plot the joint posterior of $\mu$ and $\phi$. Comments?
+
+```{r include=FALSE}
+#parts of the below code snippets from a demo of Stanmodel.R provided by the lecturer
+set.seed(1234567890)
+
+library(rstan)
+
+#stan_model
+StanModel = '
+data {
+  int<lower=0> N; 
+  vector[N] x;
+}
+parameters {
+  real mu;
+  real<lower=0> sigma2;
+  real phi;
+}
+model {
+  for(i in 2:N){
+    x[i] ~ normal( mu + phi*(x[i-1]-mu), sqrt(sigma2));
+  }
+}'
+
+#given parameters 
+phi1 <- 0.2
+phi2 <- 0.95
+
+#ar with given parameters
+res1 <- ar_process(t,mu,phi1,sigma2)
+res2 <- ar_process(t,mu,phi2,sigma2)
+
+data1 <- list(N=t, x=res1)
+data2 <- list(N=t, x=res2)
+
+warmup <- 1000
+niter <- 2000
+
+fit1 <- stan(model_code=StanModel,data=data1, warmup=warmup,iter=niter, chains = 4)
+fit2 <- stan(model_code=StanModel,data=data2, warmup=warmup,iter=niter, chains = 4)
+```
+
+### i)
+
+```{r echo=FALSE}
+fit1_summary <- summary(fit1)
+phi1_stats <- fit1_summary$summary[1:3,c(1,4,8,9)]
+
+knitr::kable(phi1_stats,caption = "Table for phi=0.2")
+```
+
+```{r}
+fit2_summary <- summary(fit2)
+phi2_stats <- fit2_summary$summary[1:3,c(1,4,8,9)]
+
+knitr::kable(phi2_stats,caption = "Table for phi=0.95")
+```
+
+From the above tables, the posterior's means are similar to the actual value for each process, except in one case. However, the number of effective posterior samples for the three inferred parameters differ; the number of effective posterior samples is much greater when $\phi$ equals 0.2 than when $\phi$ is 0.95. This is because the 95% credible intervals are smaller when $\phi$ equals 0.2. However, the 95% credible interval of $\phi$ when $\phi$ is 0.95 have greater lower and upper bounds, and this might be the reason for a low number of effective posterior samples. Both processes simulated the means of $\phi$ and $\sigma^{2}$ values pretty well. Moreover, $\mu$ is estimated close to its actual value when $\phi$ is 0.2, compared to $\mu$ when $\phi$ equals 0.95, which differs significantly; it was expected because of its "large" 95% credible interval.
+
+### ii)
+
+```{r}
+traceplot(fit1, pars = c("mu", "phi", "sigma2"), inc_warmup = TRUE, nrow = 3)
+```
+
+The above traceplots represent the convergence of the samplers when $\phi$ equals 0.2. After approximately 150 iterations all values seems to convergence to the actual ones. (The gray area illustrates the warm-up iterations).
+
+```{r}
+traceplot(fit2, pars = c("mu", "phi", "sigma2"), inc_warmup = TRUE, nrow = 3)
+```
+
+The above traceplots represent the convergence of the samplers when $\phi$ equals 0.95. After approximately 150 iterations all values seems to convergence to the actual ones. An interesting feature is that $\mu$ has extreme values in same cases, which is expected because of its "big" 95% credible interval. (The gray area illustrates the warm-up iterations).
+
+```{r}
+draws1 <- extract(fit1)
+draws2 <- extract(fit2)
+
+df_draws1 <- data.frame("mu"=draws1$mu, "phi" =draws1$phi)
+df_draws2 <- data.frame("mu"=draws2$mu, "phi" =draws2$phi)
+
+ggplot(df_draws1) +
+  geom_point(aes(x=mu, y=phi), color = "navy") +
+  ggtitle("Joint Posterior of mu and phi") +
+  theme_classic()
+```
+
+In the plot of the joint posterior of $\mu$ and $\phi$ when $\phi$ is 0.2, it is evident that most of the observations are gathered around in the region of the actual values of $\mu$ and $\phi$.
+
+```{r}
+ggplot(df_draws2) +
+  geom_point(aes(x=mu, y=phi), color = "navy") +
+  ggtitle("Joint Posterior of mu and phi") +
+  theme_classic()
+```
+
+In the plot of the joint posterior of $\mu$ and $\phi$ when $\phi$ is 0.95, the observations are plotted close to the actual value of $\phi$. However, the observations are spread because of the extremely low and upper bound of the 95% credible interval of $\mu$.
