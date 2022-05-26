@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2021) (preloaded format=pdflatex 2021.9.7)  25 MAY 2022 23:15
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2021) (preloaded format=pdflatex 2021.9.7)  26 MAY 2022 14:54
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -573,19 +573,19 @@ File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 
 {/usr/local/texlive/2021/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
 LaTeX Font Info:    Trying to load font information for TS1+lmtt on input line 
-194.
+195.
 (/usr/local/texlive/2021/texmf-dist/tex/latex/lm/ts1lmtt.fd
 File: ts1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10> not available
-(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 196.
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 197.
 <HelpFileChrsp415_files/figure-latex/unnamed-chunk-3-1.pdf, id=28, 457.71pt x 3
 16.18124pt>
 File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-3-1.pdf Graphic file (t
 ype pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-3-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-3-1.
-pdf  used on input line 241.
+pdf  used on input line 236.
 (pdftex.def)             Requested size: 457.72984pt x 316.19493pt.
 [2]
 <HelpFileChrsp415_files/figure-latex/unnamed-chunk-4-1.pdf, id=36, 457.71pt x 3
@@ -594,7 +594,7 @@ File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-4-1.pdf Graphic file (t
 ype pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-4-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-4-1.
-pdf  used on input line 260.
+pdf  used on input line 251.
 (pdftex.def)             Requested size: 457.72984pt x 316.19493pt.
 [3 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-3-1.pdf>] [4 <./HelpFil
 eChrsp415_files/figure-latex/unnamed-chunk-4-1.pdf>]
@@ -604,7 +604,7 @@ File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-6-1.pdf Graphic file (t
 ype pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-6-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-6-1.
-pdf  used on input line 324.
+pdf  used on input line 312.
 (pdftex.def)             Requested size: 459.74442pt x 316.19975pt.
 [5 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-6-1.pdf>]
 <HelpFileChrsp415_files/figure-latex/unnamed-chunk-8-1.pdf, id=78, 459.7175pt x
@@ -613,7 +613,7 @@ File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-8-1.pdf Graphic file (t
 ype pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-8-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-8-1.
-pdf  used on input line 375.
+pdf  used on input line 379.
 (pdftex.def)             Requested size: 459.74442pt x 316.19975pt.
 [6] [7 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-8-1.pdf>] [8] [9]
 <HelpFileChrsp415_files/figure-latex/unnamed-chunk-12-1.pdf, id=120, 459.7175pt
@@ -622,7 +622,7 @@ File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-12-1.pdf Graphic file (
 type pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-12-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-12-1
-.pdf  used on input line 607.
+.pdf  used on input line 611.
 (pdftex.def)             Requested size: 459.74442pt x 316.19975pt.
 [10] [11 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-12-1.pdf>] [12]
 <HelpFileChrsp415_files/figure-latex/unnamed-chunk-18-1.pdf, id=149, 453.695pt 
@@ -631,7 +631,7 @@ File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-18-1.pdf Graphic file (
 type pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-18-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-18-1
-.pdf  used on input line 736.
+.pdf  used on input line 738.
 (pdftex.def)             Requested size: 453.6939pt x 313.16922pt.
 [13 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-18-1.pdf>]
 <HelpFileChrsp415_files/figure-latex/unnamed-chunk-20-1.pdf, id=163, 453.695pt 
@@ -640,10 +640,10 @@ File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-20-1.pdf Graphic file (
 type pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-20-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-20-1
-.pdf  used on input line 805.
+.pdf  used on input line 806.
 (pdftex.def)             Requested size: 453.6939pt x 313.16922pt.
 [14] [15 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-20-1.pdf>]
-Underfull \vbox (badness 10000) detected at line 923
+Underfull \vbox (badness 10000) detected at line 915
  []
 
 [16]
@@ -653,7 +653,7 @@ File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-22-1.pdf Graphic file (
 type pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-22-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-22-1
-.pdf  used on input line 925.
+.pdf  used on input line 917.
 (pdftex.def)             Requested size: 463.73842pt x 316.18529pt.
 [17 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-22-1.pdf>]
 <HelpFileChrsp415_files/figure-latex/unnamed-chunk-24-1.pdf, id=201, 453.695pt 
@@ -662,20 +662,20 @@ File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-24-1.pdf Graphic file (
 type pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-24-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-24-1
-.pdf  used on input line 983.
+.pdf  used on input line 970.
 (pdftex.def)             Requested size: 453.6939pt x 313.16922pt.
-[18] [19 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-24-1.pdf>]
-<HelpFileChrsp415_files/figure-latex/unnamed-chunk-25-1.pdf, id=220, 459.7175pt
+[18 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-24-1.pdf>]
+<HelpFileChrsp415_files/figure-latex/unnamed-chunk-25-1.pdf, id=213, 459.7175pt
  x 316.18124pt>
 File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-25-1.pdf Graphic file (
 type pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-25-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-25-1
-.pdf  used on input line 1039.
+.pdf  used on input line 1024.
 (pdftex.def)             Requested size: 459.74442pt x 316.19975pt.
-[20 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-25-1.pdf>]
+[19] [20 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-25-1.pdf>]
 LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 1
-095.
+080.
 (/usr/local/texlive/2021/texmf-dist/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) [21] [22] [23]
@@ -685,7 +685,7 @@ File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-33-1.pdf Graphic file (
 type pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-33-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-33-1
-.pdf  used on input line 1334.
+.pdf  used on input line 1324.
 (pdftex.def)             Requested size: 459.7304pt x 313.17877pt.
 [24 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-33-1.pdf>]
 <HelpFileChrsp415_files/figure-latex/unnamed-chunk-34-1.pdf, id=272, 444.66125p
@@ -694,7 +694,7 @@ File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-34-1.pdf Graphic file (
 type pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-34-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-34-1
-.pdf  used on input line 1381.
+.pdf  used on input line 1374.
 (pdftex.def)             Requested size: 444.66016pt x 286.06805pt.
 [25 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-34-1.pdf>] [26]
 <HelpFileChrsp415_files/figure-latex/unnamed-chunk-37-1.pdf, id=297, 436.63126p
@@ -703,7 +703,7 @@ File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-37-1.pdf Graphic file (
 type pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-37-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-37-1
-.pdf  used on input line 1500.
+.pdf  used on input line 1496.
 (pdftex.def)             Requested size: 436.63019pt x 289.07928pt.
 [27]
 <HelpFileChrsp415_files/figure-latex/unnamed-chunk-38-1.pdf, id=302, 436.63126p
@@ -712,26 +712,25 @@ File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-38-1.pdf Graphic file (
 type pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-38-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-38-1
-.pdf  used on input line 1516.
+.pdf  used on input line 1513.
 (pdftex.def)             Requested size: 436.63019pt x 289.07928pt.
-[28 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-37-1.pdf> <./HelpFileC
-hrsp415_files/figure-latex/unnamed-chunk-38-1.pdf>]
-<HelpFileChrsp415_files/figure-latex/unnamed-chunk-40-1.pdf, id=323, 459.7175pt
+[28 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-37-1.pdf>] [29 <./Help
+FileChrsp415_files/figure-latex/unnamed-chunk-38-1.pdf>]
+<HelpFileChrsp415_files/figure-latex/unnamed-chunk-40-1.pdf, id=328, 459.7175pt
  x 313.17pt>
 File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-40-1.pdf Graphic file (
 type pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-40-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-40-1
-.pdf  used on input line 1588.
+.pdf  used on input line 1583.
 (pdftex.def)             Requested size: 459.7304pt x 313.17877pt.
-[29]
 <HelpFileChrsp415_files/figure-latex/unnamed-chunk-41-1.pdf, id=329, 463.7325pt
  x 316.18124pt>
 File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-41-1.pdf Graphic file (
 type pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-41-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-41-1
-.pdf  used on input line 1612.
+.pdf  used on input line 1602.
 (pdftex.def)             Requested size: 463.73842pt x 316.18529pt.
 [30 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-40-1.pdf>]
 <HelpFileChrsp415_files/figure-latex/unnamed-chunk-41-2.pdf, id=341, 463.7325pt
@@ -740,54 +739,57 @@ File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-41-2.pdf Graphic file (
 type pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-41-2.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-41-2
-.pdf  used on input line 1627.
+.pdf  used on input line 1613.
 (pdftex.def)             Requested size: 463.73842pt x 316.18529pt.
-[31 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-41-1.pdf>] [32 <./Help
-FileChrsp415_files/figure-latex/unnamed-chunk-41-2.pdf>]
-<HelpFileChrsp415_files/figure-latex/unnamed-chunk-42-1.pdf, id=367, 453.695pt 
+[31 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-41-1.pdf>]
+<HelpFileChrsp415_files/figure-latex/unnamed-chunk-42-1.pdf, id=354, 453.695pt 
 x 313.17pt>
 File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-42-1.pdf Graphic file (
 type pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-42-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-42-1
-.pdf  used on input line 1668.
+.pdf  used on input line 1647.
 (pdftex.def)             Requested size: 453.6939pt x 313.16922pt.
-
-Underfull \hbox (badness 10000) in paragraph at lines 1682--1700
+[32 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-41-2.pdf>]
+Underfull \hbox (badness 10000) in paragraph at lines 1661--1679
 
  []
 
 [33 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-42-1.pdf>]
 
 LaTeX Warning: Command \textperiodcentered invalid in math mode on input line 1
-765.
+745.
 
 
 LaTeX Warning: Command \textperiodcentered invalid in math mode on input line 1
-765.
+745.
 
 [34] [35]
-Overfull \hbox (3.66058pt too wide) in alignment at lines 1864--1869
+Overfull \hbox (3.66058pt too wide) in alignment at lines 1850--1855
  [] [] [] [] [] [] [] [] [] 
  []
 
 
-Overfull \hbox (3.66058pt too wide) in alignment at lines 1869--1889
+Overfull \hbox (3.66058pt too wide) in alignment at lines 1855--1875
  [] [] [] [] [] [] [] [] [] 
  []
 
 [36]
-Underfull \hbox (badness 10000) in paragraph at lines 1978--1980
+Underfull \hbox (badness 10000) in paragraph at lines 1966--1968
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1980--1984
+Underfull \hbox (badness 10000) in paragraph at lines 1968--1972
 
  []
 
 [37]
-Underfull \vbox (badness 10000) detected at line 2098
+Underfull \vbox (badness 10000) detected at line 2084
+ []
+
+
+Overfull \vbox (1.90346pt too high) detected at line 2084
  []
 
 [38]
@@ -797,10 +799,10 @@ File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-51-1.pdf Graphic file (
 type pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-51-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-51-1
-.pdf  used on input line 2100.
+.pdf  used on input line 2086.
 (pdftex.def)             Requested size: 464.74928pt x 313.17877pt.
 [39]
-Underfull \hbox (badness 10000) in paragraph at lines 2111--2123
+Underfull \hbox (badness 10000) in paragraph at lines 2097--2109
 
  []
 
@@ -811,67 +813,63 @@ File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-52-1.pdf Graphic file (
 type pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-52-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-52-1
-.pdf  used on input line 2152.
+.pdf  used on input line 2135.
 (pdftex.def)             Requested size: 463.73842pt x 316.18529pt.
 [41 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-52-1.pdf>]
-Underfull \vbox (badness 10000) detected at line 2270
- []
-
-[42]
-<HelpFileChrsp415_files/figure-latex/unnamed-chunk-54-1.pdf, id=456, 459.7175pt
+<HelpFileChrsp415_files/figure-latex/unnamed-chunk-54-1.pdf, id=452, 459.7175pt
  x 313.17pt>
 File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-54-1.pdf Graphic file (
 type pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-54-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-54-1
-.pdf  used on input line 2272.
+.pdf  used on input line 2220.
 (pdftex.def)             Requested size: 459.7304pt x 313.17877pt.
-[43] [44 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-54-1.pdf>]
-<HelpFileChrsp415_files/figure-latex/unnamed-chunk-58-1.pdf, id=478, 438.63875p
+[42] [43 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-54-1.pdf>]
+<HelpFileChrsp415_files/figure-latex/unnamed-chunk-58-1.pdf, id=474, 438.63875p
 t x 291.0875pt>
 File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-58-1.pdf Graphic file (
 type pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-58-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-58-1
-.pdf  used on input line 2366.
+.pdf  used on input line 2315.
 (pdftex.def)             Requested size: 438.64435pt x 291.09122pt.
-[45 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-58-1.pdf>]
-<HelpFileChrsp415_files/figure-latex/unnamed-chunk-59-1.pdf, id=497, 438.63875p
+[44 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-58-1.pdf>]
+<HelpFileChrsp415_files/figure-latex/unnamed-chunk-59-1.pdf, id=493, 438.63875p
 t x 291.0875pt>
 File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-59-1.pdf Graphic file (
 type pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-59-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-59-1
-.pdf  used on input line 2379.
+.pdf  used on input line 2329.
 (pdftex.def)             Requested size: 438.64435pt x 291.09122pt.
-<HelpFileChrsp415_files/figure-latex/unnamed-chunk-60-1.pdf, id=498, 459.7175pt
+<HelpFileChrsp415_files/figure-latex/unnamed-chunk-60-1.pdf, id=494, 459.7175pt
  x 313.17pt>
 File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-60-1.pdf Graphic file (
 type pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-60-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-60-1
-.pdf  used on input line 2403.
+.pdf  used on input line 2351.
 (pdftex.def)             Requested size: 459.7304pt x 313.17877pt.
-[46 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-59-1.pdf>]
-<HelpFileChrsp415_files/figure-latex/unnamed-chunk-61-1.pdf, id=514, 459.7175pt
+[45 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-59-1.pdf>]
+<HelpFileChrsp415_files/figure-latex/unnamed-chunk-61-1.pdf, id=510, 459.7175pt
  x 313.17pt>
 File: HelpFileChrsp415_files/figure-latex/unnamed-chunk-61-1.pdf Graphic file (
 type pdf)
 <use HelpFileChrsp415_files/figure-latex/unnamed-chunk-61-1.pdf>
 Package pdftex.def Info: HelpFileChrsp415_files/figure-latex/unnamed-chunk-61-1
-.pdf  used on input line 2418.
+.pdf  used on input line 2364.
 (pdftex.def)             Requested size: 459.7304pt x 313.17877pt.
-[47 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-60-1.pdf>] [48 <./Help
+[46 <./HelpFileChrsp415_files/figure-latex/unnamed-chunk-60-1.pdf>] [47 <./Help
 FileChrsp415_files/figure-latex/unnamed-chunk-61-1.pdf>] (./HelpFileChrsp415.au
 x) ) 
 Here is how much of TeX's memory you used:
- 13878 strings out of 478994
- 212230 string characters out of 5858185
- 554232 words of memory out of 5000000
+ 13877 strings out of 478994
+ 212223 string characters out of 5858185
+ 555560 words of memory out of 5000000
  30745 multiletter control sequences out of 15000+600000
  482592 words of font info for 176 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 85i,12n,88p,1137b,446s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 85i,12n,88p,1137b,448s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}{/usr/
 local/texlive/2021/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}{/usr/local/texlive/
 2021/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}{/usr/local/texlive/2021/texmf-di
@@ -894,10 +892,10 @@ fonts/type1/public/lm/lmsy10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type
 ></usr/local/texlive/2021/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></usr/loc
 al/texlive/2021/texmf-dist/fonts/type1/public/lm/lmtti10.pfb></usr/local/texliv
 e/2021/texmf-dist/fonts/type1/public/amsfonts/symbols/msam10.pfb>
-Output written on HelpFileChrsp415.pdf (48 pages, 1403718 bytes).
+Output written on HelpFileChrsp415.pdf (47 pages, 1403093 bytes).
 PDF statistics:
- 762 PDF objects out of 1000 (max. 8388607)
- 611 compressed objects within 7 object streams
- 143 named destinations out of 1000 (max. 500000)
+ 758 PDF objects out of 1000 (max. 8388607)
+ 608 compressed objects within 7 object streams
+ 142 named destinations out of 1000 (max. 500000)
  43446 words of extra memory for PDF output out of 51595 (max. 10000000)
 

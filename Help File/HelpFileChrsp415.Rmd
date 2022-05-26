@@ -5,6 +5,7 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
 ```
 
 # Lab 1
@@ -178,7 +179,7 @@ $$ \tau^2  = \frac{\sum^2_{i=1}(\log\ y_i - \mu)^2}{n}  $$
 
 **Question**:Simulate 10, 000 draws from the posterior of $\sigma^2$ by assuming $\mu = 3.5$ and plot the posterior distribution.
 
-```{r echo=FALSE}
+```{r}
 #observations
 obs <- c(33,24,48,32,55,74,23,76,17)
 n <- length(obs)
