@@ -58,6 +58,8 @@ rownames(df_intervals) <- c("95% Equal Tail Credible Interval")
 knitr::kable(df_intervals)
 ```
 
+The ratio is the odds of not choosing brand A, i.e. it describes how many more times likely it is to not choose brand A compared to choosing brand A. The credible interval shows the values of the ratio with 95 % probability.
+
 ## Task 3
 
 ```{r}
@@ -78,7 +80,7 @@ xDraws <- matrix(0,N,length(a))
 thetaDraws <- matrix(0,N,length(a))
 
 for (i in 1:length(a)){
-  xDraws[,i] <- rgamma(N,a[i]+counts[i])
+  xDraws[,i] <- rgamma(N,a[i]+counts[i], rate = 1)
 }
 
 for (i in 1:N){
@@ -112,7 +114,6 @@ sum_x2 <- 2.8
 post_dens <- exp(LogPost(theta,n, sum_x2))
 
 #normalise posterior density
-
 post_dens <- post_dens/(0.01 * sum(post_dens))
 
 df_plot <- data.frame("theta" = theta, "posterior" = post_dens)
@@ -156,13 +157,108 @@ source("ExamData.R")
 ## Task a
 
 ```{r}
-mu_0 <- as.vector(rep(0,7))
-Omega_0 <- (1/25) * diag(7)
-sigma2_0 <- 4
+#BayesLinReg <- function(y, X, mu_0, Omega_0, v_0, sigma2_0, nIter)
+library(mvtnorm)
+
+mu_0 <- rep(0,7)
+Omega_0 <- 1/25 * diag(7)
 v_0 <- 1
+sigma2_0 <- 4 
 nIter <- 1000
 
-#BayesLinReg <- function(y, X, mu_0, Omega_0, v_0, sigma2_0, nIter)
-sample <- BayesLinReg(y, X, mu_0, Omega_0, v_0, sigma2_0, nIter)
+PostDraws <- BayesLinReg(y, X, mu_0, Omega_0, v_0, sigma2_0, nIter)
 
+Betas <- PostDraws$betaSample
+
+BetasMean <- colMeans(Betas)
+
+intervals <- matrix(NA, nrow = 7, ncol = 2)
+
+for (i in 1:ncol(Betas)){
+  intervals[i,] <- quantile(Betas[,i], probs = c(0.025, 0.975))
+}
+
+colnames(intervals) <- c("2.5%","97.5")
+rownames(intervals) <- c("b0","b1","b2","b3","b4","b5","b6")
+knitr::kable(intervals)
+```
+
+## Task b
+
+```{r}
+Sigma2 <- PostDraws$sigma2Sample
+Sigma2Median <- median(sqrt(Sigma2))
+```
+
+The posterior median of the standard deviation $\sigma$ is approximately 0.64.
+
+## Task c
+
+```{r}
+Effect_B <- Betas[,2] + Betas[,6]
+Effect_C <- Betas[,2] + Betas[,7]
+
+Diff <- Effect_B - Effect_C
+
+DensDiff <- density(Diff)
+
+df_DensDiff <- data.frame("x" = DensDiff$x, "y" = DensDiff$y)
+
+DiffInterval <- quantile(Diff,probs=c(0.025,0.975))
+
+df_DiffInterval <- data.frame(lower_bound = DiffInterval[1], upper_bound = DiffInterval[2])
+colnames(df_DiffInterval) <- c("lower bound", "upper bound")
+rownames(df_DiffInterval) <- c("95% Equal Tail Credible Interval")
+knitr::kable(df_DiffInterval)
+
+ggplot(df_DensDiff) +
+  geom_line(aes(x=x, y=y), color = "navy") +
+  xlab("b5 - b6") +
+  theme_classic()
+```
+
+There is substantial probability mass that the effect on y from x1 is larger in high school B compared to high school C. However, the 95 % equal tail credible interval for the difference of the slopes of x1 between the high schools reveals that the difference can be either negative or positive. Hence, the probability is not that high that this effect in high school B is larger than in high school C.
+
+## Task d
+
+```{r}
+x1_grid <- seq(min(X[,2]), max(X[,2]), 0.01)
+ExpectedMu <- matrix(NA, nrow = length(x1_grid), ncol = 2)
+
+for (i in 1:length(x1_grid)){
+  Mu <- Betas[,1] + Betas[,2]*x1_grid[i] + Betas[,3]*0.5
+  ExpectedMu[i,] <- quantile(Mu, probs = c(0.05,0.95))
+}
+
+df_ExpectedMu <- data.frame("x1"= x1_grid,
+                            "lower" = ExpectedMu[,1],
+                            "upper" = ExpectedMu[,2])
+
+ggplot(df_ExpectedMu) +
+  geom_line(aes(x=x1, y=lower),color = "navy") +
+  geom_line(aes(x=x1, y=upper),color = "navy") +
+  ggtitle("90 % posterior probability intervals as a function of x1") +
+  xlab("x1 values") +
+  ylab("") +
+  theme_classic()
+```
+
+## Task e
+
+```{r}
+Mu <- Betas[,1] + Betas[,2]*0.4 + Betas[,3] + Betas[,4] + Betas[,6]
+N <- 1000
+
+y <- rnorm(N, mean = Mu, sd = sqrt(Sigma2))
+
+yDens <- density(y)
+
+df_y <- data.frame("x"=yDens$x, "y"=yDens$y)
+
+ggplot(df_y) +
+  geom_line(aes(x=x,y=y), color = "navy") +
+  ggtitle("Posterior Predictive Distribution Of y") +
+  xlab("y") +
+  ylab("Density") +
+  theme_classic()
 ```

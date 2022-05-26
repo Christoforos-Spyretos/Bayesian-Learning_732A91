@@ -57,7 +57,7 @@ BayesLinReg <- function(y, X, mu_0, Omega_0, v_0, sigma2_0, nIter){
   for (i in 1:nIter){
     
     # Simulate from p(sigma2 | y, X)
-    sigma2 = rinvchisq(n=1, df=v_n, scale = sigma2_n)
+    sigma2 = (v_n*sigma2_n)/rchisq(n=1,df=v_n)
     sigma2Sample[i] = sigma2
     
     # Simulate from p(beta | sigma2, y, X)
