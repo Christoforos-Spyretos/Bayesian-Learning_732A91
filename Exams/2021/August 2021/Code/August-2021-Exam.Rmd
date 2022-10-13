@@ -68,7 +68,7 @@ for (i in 1:N){
 overweight_weeks <- mean(rowSums(weights > 2.4))
 ```
 
-The expected number of weeks out of the future 30 weeks in which the maximal weight will exceed 2.4 thousands of kilos about 10.5.
+The expected number of weeks out of the future 30 weeks in which the maximal weight will exceed 2.4 thousands of kilos is about 10.5.
 
 ```{r}
 #given loss function
@@ -123,6 +123,8 @@ colnames(df_interval) <- c("lower bound", "upper bound")
 rownames(df_interval) <- c("99% Equal Tail Credible Interval")
 knitr::kable(df_interval)
 ```
+
+It is 99 % posterior probability that beta_1 is on the above interval.
 
 ## Task b
 
@@ -230,18 +232,18 @@ logPost <- function(theta,n,sumlogx){
   return(logLik)
 }
 
-theta <- runif(100,0,1)
+thetaGrid <- seq(-1,1.7,0.01)
 n <- 5
 sumlogx <- 2
 
-posterior <- exp(logPost(theta,n,sumlogx))
+posterior <- exp(logPost(thetaGrid,n,sumlogx))
 
 posterior <- posterior/(0.01*sum(posterior))
 
-df_plot2 <- data.frame("x"=posterior)
+df_plot2 <- data.frame("posterior"=posterior, "theta"= thetaGrid)
 
-ggplot(df_plot2, aes(x=x)) +
-  geom_density(colour = "red4", size = 1) +
+ggplot(df_plot2) +
+  geom_line(aes(x=theta, y=posterior), colour = "red4", size = 1) +
   ggtitle("Posterior Distribution of Theta") +
   xlab("Theta Values") +
   ylab("Density") +
