@@ -116,7 +116,6 @@ Omega_0 <- (1/25)*diag(7)
 v_0 <- 1
 sigma2_0 <- 4
 nIter <- 10000
-library(geoR)
 library(mvtnorm)
 
 PostDraws <- BayesLinReg(y, X, mu_0, Omega_0, v_0, sigma2_0, nIter)
