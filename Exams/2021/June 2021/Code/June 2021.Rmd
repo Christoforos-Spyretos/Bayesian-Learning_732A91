@@ -1,5 +1,5 @@
 ---
-title: "June 201"
+title: "June 2021"
 author: "Christophoros Spyretos"
 date: '2022-10-16'
 output: pdf_document
