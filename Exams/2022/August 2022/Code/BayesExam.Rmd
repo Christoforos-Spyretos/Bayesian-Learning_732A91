@@ -1,7 +1,7 @@
 ---
 title: "BayesExam"
 author: "Christophoros Spyretos"
-date: '2022-10-17'
+date: '2022-10-18'
 output: pdf_document
 ---
 
@@ -9,25 +9,25 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Problem 1 
+# Problem 1
 
 ## Task d
 
 ```{r}
 LogPost <- function(theta,n,sumx){
-  res <- (4+3*n-1)*log(theta) - theta*(2 - (1/sumx))
+  res <- (3*n+3)*log(theta) - theta*(2+sumx)
   return(res)
 }
 
-thetaGrid <- seq(2,20,0.01)
+thetaGrid <- seq(0.01,6,0.01)
 n <- 4
-obs <- c(0.7,1.1,0.9,1.5)
-sumx <- sum(obs)
+vals <- c(0.7, 1.1, 0.9, 1.5)
+sumx <- sum(1/vals)
 
 LogPost_propto <- exp(LogPost(thetaGrid,n,sumx))
-LogPost_Dens <- LogPost_propto/(0.01*sum(LogPost_propto))
+LogPost_dens <- LogPost_propto/(0.01*sum(LogPost_propto))
 
-plot(thetaGrid,LogPost_Dens, type = "l", col = "navy",
+plot(thetaGrid,LogPost_dens, type = "l", col = "navy",
      main = "Posterior Distribution of theta",
      xlab = "theta", ylab = "")
 ```
@@ -35,23 +35,21 @@ plot(thetaGrid,LogPost_Dens, type = "l", col = "navy",
 ## Task e
 
 ```{r}
-OptimRes <- optim(5, LogPost, gr = NULL, n, sumx,
-                  method = c("L-BFGS-B"),lower = 0.1,
-                  control = list(fnscale = -1),
-                  hessian = TRUE)
+OptimRes <- optim(2, LogPost, gr = NULL, n, sumx,
+                  method = c("L-BFGS-B"), lower = 0.1,
+                  control = list(fnscale = -1), hessian = TRUE)
 
-approx <- dnorm(thetaGrid, mean = OptimRes$par, 
-                sd = sqrt(diag(-solve(OptimRes$hessian))))
+approx <- dnorm(thetaGrid, mean = OptimRes$par, sd = sqrt(diag(-solve(OptimRes$hessian))))
 
-plot(thetaGrid,LogPost_Dens, type = "l", col = "navy",
+plot(thetaGrid,LogPost_dens, type = "l", col = "navy",
      main = "Posterior Distribution of theta",
      xlab = "theta", ylab = "")
 lines(thetaGrid,approx, type = "l", col = "red3")
-legend("topright", legend = c("Exact","Approximated"), 
+legend("topright", legend = c("Exact", "Approximated"), 
        col = c("navy", "red3"), lty = 1:2)
 ```
 
-The posterior approximation accurate, the exact posterior is slighlty skewed to the right.
+The posterior approximation is not that accurate, the exact posterior is skewed to the right.
 
 # Problem 2
 
@@ -62,24 +60,29 @@ source("ExamData.R")
 ## Task a
 
 ```{r}
+set.seed(12345)
+
 mu_0 <- as.vector(rep(0,3))
-Sigma_0 <- 100*diag(3)
+Sigma2_0 <- 100*diag(3)
 nIter <- 20000
 
-PostDraws <- BayesLogitReg(y, X, mu_0, Sigma_0, nIter)
+PostDraws <- BayesLogitReg(y, X, mu_0, Sigma2_0, nIter)
+```
 
+```{r}
 Betas <- PostDraws$betaSample
+```
 
+```{r}
 intervalB1 <- quantile(Betas[,2], probs = c(0.025,0.975))
 
-intervalB1 <- data.frame(lower_bound = intervalB1[1], 
-                         upper_bound = intervalB1[2])
-colnames(intervalB1) <- c("Lower bound", "Upper bound")
+intervalB1 <- data.frame(lower_bound = intervalB1[1], upper_bound = intervalB1[2])
+colnames(intervalB1) <- c("Lower Bound", "Upper Bound")
 rownames(intervalB1) <- c("95% Equal Tail Credible Interval")
 knitr::kable(intervalB1)
 ```
 
-There is 95% posterioir probability that $\beta_1$ is in the interval (0.014,0.181).
+The 95% posterior probability that $\beta_1$ is on this interval.
 
 ## Task b
 
@@ -87,66 +90,70 @@ There is 95% posterioir probability that $\beta_1$ is in the interval (0.014,0.1
 prob2b <- mean(Betas[,2]>0 & Betas[,3]>0)
 ```
 
-The joint posterior probability that both $\beta_1 > 0$ and $\beta_2 > 0$ is appriximately 0.91.
+The joint posterior probability that both $\beta_1 > 0$ and $\beta_2 > 0$  is approximately 0.92.
 
 ## Task c
 
 ```{r}
-numerator <- exp(Betas[,1] + Betas[,2]*5 + Betas[,3]*1)
+numerator <- exp(Betas[,1]+Betas[,2]*5+Betas[,3])
 pi <- numerator/(1+numerator)
 
-odds <- (1-pi)/pi
+ratio <- (1-pi)/pi
 
-plot(density(odds), type = "l", col = "navy",
-     main = "Posterior Distribution of (1-p)/p",
-     xlab = "(1-p)/p", ylab = "")
+plot(density(ratio), type = "l", col = "navy", 
+     main = "Posterior distribution of (1-pi)/pi",
+     xlab = "(1-pi)/pi", ylab = "")
 ```
 
-```{r}
-min(X[,2])
-```
+The ratio represents the odds that a bridge does not need repair within the next five years. The plot seems reasonable, because it is a 5 year old and it should not need repair. The reliability of results for such bridges should be question because it is a very new bridge.
 
-The plot seems reasonable with very large values of this odds as this bridge is built very recently. The reliability of these results should be questioned because a five-year-old bridge is much newer compared to the youngest bridge of 19 years in the data.
+## Task d
 
 ```{r}
-x1Grid <- seq(min(X[,2]), max(X[,2]),0.1)
-intervals <- matrix(0,length(x1Grid),2)
+x1Grid <- seq(min(X[,2]), max(X[,2]), 0.1)
+intervals <- matrix(0,length( x1Grid), 2)
 
 for (i in 1:length(x1Grid)){
-  numerator <- exp(Betas[,1] + Betas[,2]*x1Grid[i])
+  numerator <- exp(Betas[,1]+Betas[,2]*x1Grid[i]+Betas[,3])
   pi <- numerator/(1+numerator)
-  intervals[i,] <- quantile(pi,probs = c(0.025,0.975))
+  intervals[i,] <- quantile(pi, probs = c(0.025,0.975))
 }
 
-plot(x1Grid,intervals[,1], type = "l", col = "navy",
-     main = "95 % equal tail posterior probability intervals for pi on a grid of values of x1",
+plot(x1Grid, intervals[,1], type = "l", col = "navy",
+     main = "95 % equal tail posterior probability intervals 
+     for pi on a grid of values of x1",
      xlab = "x1", ylab = "", ylim = c(0,1))
-lines(x1Grid,intervals[,2], type = "l", col = "navy")
+lines(x1Grid, intervals[,2], type = "l", col = "navy")
 ```
 
 ## Task e
 
 ```{r}
-numerator <- exp(Betas[,1] + Betas[,2]*40 + Betas[,3]*1)
+numerator <- exp(Betas[,1]+Betas[,2]*40+Betas[,3])
 pi <- numerator/(1+numerator)
 
-plot(density(pi), type = "l", col = "navy",
-     main = "Posterior Distribution of p",
-     xlab = "p", ylab = "")
+plot(density(pi), col = "navy",
+     main = "Posterior distribution of pi",
+     xlab = "pi", ylab = "")
 
 prob2e <- mean(pi>0.5)
 ```
 
-The posterior probability that $p_i > 0.5$ for this bridge is 0.1577.
+The posterior probability that $p_i > 0.5$ is approximately 0.16
 
-# Probem 3
+# Problem 3
 
 ## Task c
 
 ```{r}
-theta <- 19/30
-buy <- theta*60 + (1-theta)*(-20)
-nobuy <- theta*180 + (1-theta)*(-240)
-```
+buy <- 80*(19/30) - 20
+nobuy <- 420*(19/30) - 240
+````
 
-Since the expected utility when buying the option is higher (30.7 compared to 26), the bank should buy the option.
+The bank should buy the option.
+
+
+
+
+
+
