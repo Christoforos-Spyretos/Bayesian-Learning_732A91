@@ -1,0 +1,209 @@
+---
+title: "BayesExam"
+author: "Christophoros Spyretos"
+date: '2022-10-18'
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problem 1
+
+## Task b
+
+```{r}
+nSim <- 10000
+y <- c(2.32,1.82,2.4,2.08,2.13)
+n <- 5
+
+theta <- rgamma(nSim,shape = 2*n+1,rate = 0.5+sum(y))
+y_values <- rgamma(nSim,shape = 2,rate = theta)
+
+plot(density(y_values), type = "l", col = "navy",
+     main = "Predictive distribution of the maximal weight",
+     xlab = "y", ylab = "")
+
+prob1a <- mean(y_values<1.9)
+```
+
+The $Pr(Y_6 < 1.9|y_1 , ..., y_5 )$ is 0.5349.
+
+## Task b
+
+```{r}
+nWeeks <- 30
+weights <- matrix(0, nrow = nSim, ncol = nWeeks)
+
+for (i in 1:nSim) {
+  theta <- rgamma(nWeeks,shape = 2*n+1,rate = 0.5+sum(y))
+  weights[i,] <- rgamma(nWeeks,shape = 2,rate = theta)
+}
+
+prob1b <- mean(rowSums(weights > 2.4))
+```
+
+
+The expected number of weeks out of the future 30 weeks in which the maximal weight will exceed 2.4 thousands of kilos is approximately 10.5.
+
+## Task c
+
+```{r}
+loss_function <- function(a,theta) {
+  res <- a + mean(rowSums(weights > 0.9*log(a)))
+  return(res)
+}
+
+aGrid <- seq(1,10,0.01)
+cost <- matrix(0, nrow = length(aGrid), ncol = 1)
+
+for (i in 1:length(aGrid)) {
+  theta <- rgamma(nWeeks,shape = 2*n+1,rate = 0.5+sum(y))
+  cost[i,] <- loss_function(aGrid[i],theta)
+}
+
+aOpt <- aGrid[which.min(cost)]
+
+plot(aGrid,cost, type = "l", col = "navy",
+     xlab = "Cost", ylab = "a")
+points(aOpt,loss_function(aOpt,theta), col = "red3")
+```
+
+The optimal cost ia approximately 7.41.
+
+# Problem 2
+
+```{r}
+source("ExamData.R")
+```
+
+## Task a
+
+```{r}
+set.seed(12345)
+
+library("mvtnorm")
+
+mu_0 <- as.vector(rep(0,8))
+Omega_0 <-(1/9)*diag(8)
+v_0 <- 1
+sigma2_0 <- 9
+nIter <- 10000
+X <- as.matrix(X)
+
+PostDraws <- BayesLinReg(y, X, mu_0, Omega_0, v_0, sigma2_0, nIter)
+```
+
+```{r}
+Betas <- PostDraws$betaSample
+
+intervalB1 <- quantile(Betas[,2], probs = c(0.005,0.995))
+
+intervalB1 <- data.frame(lower_bound = intervalB1[1], upper_bound = intervalB1[2])
+colnames(intervalB1) <- c("Lower bound", "Upper bound")
+rownames(intervalB1) <- c("95% Equal Tail Credible Interval")
+knitr::kable(intervalB1)
+```
+
+The 99% posterior probability that $\beta_1$ is on the interval.
+
+## Task b
+
+```{r}
+mu <- Betas[,1] + Betas[,2] + Betas[,3] + Betas[,4]*0.5 + Betas[,6] + Betas[,8]
+
+CV <- sqrt(PostDraws$sigma2Sample)/mu
+
+MedianCV <- median(CV)
+```
+
+The median of the coefficient of variation is approximately 1.81.
+
+## Task c
+
+```{r}
+Effect_Inner <- Betas[,5] + Betas[,7]
+Effect_South <- Betas[,6] + Betas[,8]
+Diff <- Effect_Inner - Effect_South
+
+plot(density(Diff), type = "l", col = "navy",
+     main = "Selling price difference for apartments in the inner
+     city compared to apartments on the south side of the city",
+     xlab = "(b4+b6)-(b5+b7)", ylab = "")
+
+intervalDiff <- quantile(Diff, probs = c(0.025,0.975))
+
+intervalDiff <- data.frame(lower_bound = intervalDiff[1], upper_bound = intervalDiff[2])
+colnames(intervalDiff) <- c("Lower bound", "Upper bound")
+rownames(intervalDiff) <- c("95% Equal Tail Credible Interval")
+knitr::kable(intervalDiff)
+```
+
+There is a substantial mass probability that the expected selling price $\mu$ is higher for apartments in the inner city compared to apartments on the south side of the city when $x_1=1$. The 95% equal tail credible interval illustrates that the difference takes positive values, which strengthens the above assumption.
+
+```{r}
+plot(density(Betas[,8]),type = "l", col = "navy",
+     main = "Selling price difference for apartments in the south
+     city compared to apartments neither on the south and inner
+     side of the city",
+     xlab = "b7", ylab = "")
+```
+
+The effect on the selling price y from x1 does not differ for apartments on the south side of the city compared to apartments which are neither in the inner city nor on the south side of the city.
+
+## Task d
+
+```{r}
+mu <- Betas[,1] + Betas[,2]*(-0.5) + Betas[,3]*(-0.5) + Betas[,6] + Betas[,8]*(-0.5)
+
+plot(density(mu), type = "l", col = "navy",
+     main = "Posterior Distribution of mu",
+     xlab = "mu", ylab = "")
+
+prob2d <- mean(mu>0)
+```
+
+The posterior probability that $\mu > 0$ is 0.
+
+## Task e
+
+```{r}
+x1Grid <- seq(min(X[,2]),max(X[,2]),0.01)
+intervals <- matrix(0, nrow = length(x1Grid), ncol = 2)
+
+for (i in 1:length(x1Grid)) {
+  mu <- Betas[,1] + Betas[,2]*x1Grid[i] + Betas[,3]* +
+    Betas[,4]*0.5 + Betas[,5] + Betas[,7]*x1Grid[i]
+  intervals[i,] <- quantile(mu, probs = c(0.025,0.975))
+}
+
+plot(x1Grid,intervals[,1], type = "l", col = "navy",
+     main = "95% equal tail posterior predictive 
+     intervals for y on a grid of values of x1",
+     xlab = "x1", ylab = "", ylim = c(-2.5,6))
+lines(x1Grid,intervals[,2], type = "l", col = "navy")
+
+```
+
+# Problem 3
+
+## Task d
+
+```{r}
+LogPost <- function(theta,n,sumlnx){
+  res <- 2*theta*sumlnx - n*(theta^2)
+  return(res)
+}
+
+thetaGrid <- seq(-1.5,2.5,0.01)
+n <- 5
+sumlnx <- 2
+
+PostDens_propto <- exp(LogPost(thetaGrid,n,sumlnx))
+PostDens <- PostDens_propto/(0.01*sum(PostDens_propto))
+
+plot(thetaGrid,PostDens,type="l", col="navy",
+     main = "Posterior Distribution of theta",
+     xlab = "theta", ylab = "")
+```
