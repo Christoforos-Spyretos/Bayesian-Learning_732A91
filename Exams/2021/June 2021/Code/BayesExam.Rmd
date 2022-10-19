@@ -76,7 +76,7 @@ for (i in 1:nSim) {
 prob1d <- mean(thetas[,1] > thetas[,3])
 ```
 
-The posterior probability that $\theta_A > theta_C$ is approximately 0.642.
+The posterior probability that $\theta_A > \theta_C$ is approximately 0.642.
 
 
 # Problem 2

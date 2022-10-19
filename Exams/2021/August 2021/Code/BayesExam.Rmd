@@ -59,8 +59,7 @@ aGrid <- seq(1,10,0.01)
 cost <- matrix(0, nrow = length(aGrid), ncol = 1)
 
 for (i in 1:length(aGrid)) {
-  theta <- rgamma(nWeeks,shape = 2*n+1,rate = 0.5+sum(y))
-  cost[i,] <- loss_function(aGrid[i],theta)
+  cost[i,] <- loss_function(aGrid[i],weights)
 }
 
 aOpt <- aGrid[which.min(cost)]
@@ -70,7 +69,7 @@ plot(aGrid,cost, type = "l", col = "navy",
 points(aOpt,loss_function(aOpt,theta), col = "red3")
 ```
 
-The optimal cost ia approximately 7.41.
+The optimal cost is approximately 7.52.
 
 # Problem 2
 

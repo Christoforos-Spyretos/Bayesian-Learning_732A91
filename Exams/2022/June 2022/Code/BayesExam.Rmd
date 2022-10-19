@@ -22,7 +22,7 @@ bn <- 7
 n <- 5
 nDraws <- 10000
 
-theta <- rgamma(nDraws,shape = an + sum(q), rate = bn + n)
+theta <- rgamma(nDraws,shape = an, rate = bn)
 q6 <- rpois(nDraws,theta)
 
 hist(q6)
@@ -30,7 +30,7 @@ hist(q6)
 prob1b <- mean(q6>350)
 ```
 
-The $Pr(Q_6 > 350|q_1, ..., q_5)$ is 0.1175.
+The $Pr(Q_6 > 350|q_1, ..., q_5)$ is 0.1199.
 
 ```{r}
 set.seed(12345)
