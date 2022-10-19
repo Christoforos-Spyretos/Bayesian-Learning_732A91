@@ -14,6 +14,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Task b
 
 ```{r}
+set.seed(12345)
+
 nSim <- 10000
 y <- c(2.32,1.82,2.4,2.08,2.13)
 n <- 5
@@ -28,11 +30,13 @@ plot(density(y_values), type = "l", col = "navy",
 prob1a <- mean(y_values<1.9)
 ```
 
-The $Pr(Y_6 < 1.9|y_1 , ..., y_5 )$ is 0.5349.
+The $Pr(Y_6 < 1.9|y_1 , ..., y_5 )$ is 0.5285.
 
 ## Task b
 
 ```{r}
+set.seed(12345)
+
 nWeeks <- 30
 weights <- matrix(0, nrow = nSim, ncol = nWeeks)
 
